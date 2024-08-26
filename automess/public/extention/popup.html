@@ -14,8 +14,72 @@
 </head>
 
 <body>
-    <div id="root"></div>
-    <script src="./popup.js"></script>
+    <div id="root">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Auto Messenger</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    width: 300px;
+                    padding: 10px;
+                }
+
+                h1 {
+                    font-size: 18px;
+                    text-align: center;
+                }
+
+                textarea {
+                    width: 100%;
+                    height: 80px;
+                    margin-bottom: 10px;
+                }
+
+                button {
+                    width: 100%;
+                    padding: 8px;
+                    margin-top: 10px;
+                }
+
+                .user-list {
+                    margin-top: 10px;
+                    max-height: 150px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                    padding: 5px;
+                }
+
+                .user-list div {
+                    margin-bottom: 5px;
+                }
+            </style>
+        </head>
+
+        <body>
+            <h1>Auto Messenger</h1>
+            <p>Gửi tin nhắn tự động cho những người đã inbox fanpage của bạn.</p>
+
+            <textarea placeholder="Nhập nội dung tin nhắn..."></textarea>
+
+            <button id="loadUsers">Tải danh sách</button>
+
+            <div class="user-list" id="userList">
+                <!-- Danh sách người dùng sẽ được thêm vào đây -->
+            </div>
+
+            <button id="sendNow">Gửi ngay</button>
+            <button id="scheduleSend">Gửi theo lịch</button>
+
+            <p id="statusMessage"></p>
+            <br>
+        </body>
+
+</html>
+</div>
+<script src="./popup.js"></script>
 </body>
 
 </html>
