@@ -21,232 +21,73 @@
 </head>
 
 <body>
-    <!-- <div id="root"> -->
-    <div id="popup" class="popup">
-        <!-- <div class="popup-content col-10"> -->
-        <div class="popup-content col-10">
-            <ul class="nav nav-pills col-12" role="tablist">
-                <li class="nav-item">
-                    <a class="nav-link active " data-bs-toggle="pill" href="#home">Thiết lập</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="pill" href="#menu1">Nhập từ khóa</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="pill" href="#menu2">Kết quả</a>
-                </li>
-            </ul>
-            <!-- Tab panes -->
-            <div class="tab-content">
-                <div id="home" class="container tab-pane active"><br>
-                    <div class="row">
-                        <form>
-                            <div class="tick">
-                                <div class="d-flex align-items-center">
-                                    <label class="form-label" for="flexSwitchCheckDefault">Chạy trực tiếp</label>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
-                                        <label class="form-check-label" for="flexSwitchCheckDefault">Chạy theo
-                                            lịch</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="check col-12">
-                                <label for="timeOver">Tên trang</label>
-                                <div class="input-group laplai">
-                                    <input class="form-select" id="timeOver">
-                                    </input>
-                                    <span class="input-group-text">
-                                        <i class="fas fa-chevron-down" style="font-size: 0.5em;"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="check">
-                                <label for="">Trang Web</label>
-                                <input class="form-select" id="timeOver">
-                                </input>
-                            </div>
-                            <div class="check col-12">
-                                <label for="timeOver">Nhập file Credentials Google Cloud</label>
-                                <div class="input-group laplai">
-                                    <input class="form-select" id="timeOver">
-                                    </input>
-                                    <span class="input-group-text">
-                                        <i class="fas fa-chevron-down" style="font-size: 0.5em;"></i>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="check">
-                                <label for=""> Link trang Google Sheet</label>
-                                <input class="form-select" id="timeOver">
-                                </input>
-                            </div>
-                            <div class="check col-12">
-                                <div class="time col-12">
-                                    <div class="day col-6">
-                                        <label for="checkPerDay">Lần check/ngày</label>
-                                        <div>
-                                            <select class="form-select" id="checkPerDay">
-                                                <option selected>1 lần</option>
-                                                <option>2 lần</option>
-                                                <option>3 lần</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="wait col-6">
-                                        <label for="timeWait">Time Wait</label>
-                                        <div class="wait">
-                                            <select class="form-select" id="timeWait">
-                                                <option selected>60s</option>
-                                                <option>120s</option>
-                                                <option>180s</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="time col-12">
-                                    <div class="day col-6">
-                                        <label for="timeDelay">Time Delay</label>
-                                        <div class="">
-                                            <select class="form-select" id="timeDelay">
-                                                <option selected>300s</option>
-                                                <option>600s</option>
-                                                <option>900s</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="wait col-6">
-                                        <label for="timeOver">Time Over</label>
-                                        <div class="wait">
-                                            <select class="form-select" id="timeOver">
-                                                <option selected>120s</option>
-                                                <option>240s</option>
-                                                <option>360s</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="tick">
-                                <div class="d-flex align-items-center">
-                                    <label class="form-label" for="flexSwitchCheckDefault">Time Over:</label>
-                                    <label class="form-label" for="flexSwitchCheckDefault">Dừng</label>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
-                                        <label class="form-check-label" for="flexSwitchCheckDefault">Chạy lại</label>
-                                    </div>
-                                </div>
-                                <div class="check col-12">
-                                    <div class="time col-12">
-                                        <div class="day col-6">
-                                            <label for="checkPerDay">Ngày bắt đầu</label>
-                                            <div>
-                                                <input type="date" class="form-control" id="checkPerDay" name="date" />
-                                            </div>
-                                        </div>
-                                        <div class="wait col-6">
-                                            <label for="timeWait">Thời gian hiện tại</label>
-                                            <div class="wait">
-                                                <input type="time" class="form-control" id="tenTrang" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="check col-12">
-                                <label for="timeOver">Chọn kiểu lặp lại</label>
-                                <div class="input-group laplai">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-calendar-alt" style="font-size: 0.5em;"></i>
-                                    </span>
-                                    <select class="form-select" id="timeOver">
-                                        <option selected>Không lặp lại</option>
-                                        <option>Hằng ngày</option>
-                                        <option>Hằng tuần</option>
-                                        <option>Hằng tháng</option>
-                                    </select>
-                                    <span class="input-group-text">
-                                        <i class="fas fa-chevron-down" style="font-size: 0.5em;"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <footer>
-                        <button onclick="">Xóa</button>
-                        <button>Lưu</button>
-                        <button>Sửa</button>
-                    </footer>
-                </div>
-                <div id="menu1" class="container tab-pane fade"><br>
+    <div id="root">
 
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Auto Messenger</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    width: 300px;
+                    padding: 10px;
+                }
 
-                    <p class="p">Chọn trang để nhập từ khóa</p>
-                    <form>
-                        <select class="box">
-                            <option>Vietstar Agency</option>
-                        </select>
-                        <!-- <input type="text" class="form-control" placeholder="Vietstar Agency"> -->
-                        <textarea class="input-box " placeholder="Nhập từ khóa trực tiếp vào đây và mỗi từ khóa 1 dòng.
-                
-                Vidụ:
-                taxi buôn ma thuột
-                taxi gần đây
-                sấu riêng gia lai
-                taxi bmt
-                đặc sản đấk läk
-                taxi buôn ma thuôt
-                taxi buon ma thuột
-                taxi sân bay buôn ma thuột
-                số taxi bmtt
-                số điện thoại taxi buôn ma thuột
-                "></textarea>
-                    </form>
-                    <div class="foote">
-                        <button class="btn-secondary">Xuất</button>
-                        <button class="btn-secondary">Nhập</button>
-                        <button class="btn-warning">Lưu</button>
-                    </div>
-                </div>
+                h1 {
+                    font-size: 18px;
+                    text-align: center;
+                }
+
+                textarea {
+                    width: 100%;
+                    height: 80px;
+                    margin-bottom: 10px;
+                }
+
+                button {
+                    width: 100%;
+                    padding: 8px;
+                    margin-top: 10px;
+                }
+
+                .user-list {
+                    margin-top: 10px;
+                    max-height: 150px;
+                    overflow-y: auto;
+                    border: 1px solid #ccc;
+                    padding: 5px;
+                }
+
+                .user-list div {
+                    margin-bottom: 5px;
+                }
+            </style>
+        </head>
+
+        <body>
+            <h1>Auto Messenger</h1>
+            <p>Gửi tin nhắn tự động cho những người đã inbox fanpage của bạn.</p>
+
+            <textarea placeholder="Nhập nội dung tin nhắn..."></textarea>
+
+            <button id="loadUsers">Tải danh sách</button>
+
+            <div class="user-list" id="userList">
+                <!-- Danh sách người dùng sẽ được thêm vào đây -->
             </div>
 
-            <div id="menu2" class="container tab-pane fade"><br>
-                <h3>Menu 434434</h3>
-                <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-                    totam rem
-                    aperiam.</p>
-            </div>
-        </div>
-        <div class="col-2 icon-side">
-            <div class="mt-2 logo-side">
-                <img class="img-fluid img-shadow" src="/img/logo vietstar.svg" alt="">
-            </div>
-            <div class="mt-4 robot">
-                <a href="#"><img src="/img/icon robot check.svg" alt="robot check"></a>
-            </div>
-            <div class="mt-3 edit">
-                <a href="#"><img src="/img/icon edit.svg" alt="edit"></a>
-            </div>
-            <div class="icon-finish mt-auto">
-                <div class="mt-3 call">
-                    <a href="#"><img src="/img/icon call.svg" alt="call"></a>
-                </div>
-                <div class="mt-3 power">
-                    <a href="#"><img src="/img/icon power.svg" alt="power"></a>
-                </div>
-                <div class="mt-3 user">
-                    <a href="#"><img src="/img/icon user.svg" alt="user"></a>
-                </div>
-            </div>
+            <button id="sendNow">Gửi ngay</button>
+            <button id="scheduleSend">Gửi theo lịch</button>
 
-        </div>
+            <p id="statusMessage"></p>
+            <br>
+        </body>
 
-        <!-- </div> -->
-    </div>
+</html>
+</div>
+<script src="./popup.js"></script>
 
-    </div>
-    <!-- </div> -->
-    <script src="./popup.js"></script>
 </body>
 
 </html>
