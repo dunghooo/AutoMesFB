@@ -1,0 +1,18 @@
+{
+    "manifest_version": 3,
+    "name": "Facebook Auto Messenger",
+    "version": "1.0",
+    "description": "Automatically send messages to users who message your fanpage.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "background": {
+        "service_worker": "./public/extention/background.js"
+    },
+    "action": {
+        "default_popup": "./public/extention/popup.html",
+        "default_icon": "./src/images/OIP.g-PMKXEGdnEU8sBg9_X8uwHaHa.png"
+    }
+}
