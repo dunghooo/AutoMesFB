@@ -69,6 +69,13 @@
             <h1>Auto Messenger</h1>
             <p>Gửi tin nhắn tự động cho những người đã inbox fanpage của bạn.</p>
 
+            <label for="accessToken">Access Token:</label>
+            <input type="text" id="accessToken" placeholder="Nhập Access Token..." />
+            <label for="pageId">Page ID:</label>
+            <br>
+            <input type="text" id="pageId" placeholder="Nhập Page ID..." />
+            <br>
+
             <textarea placeholder="Nhập nội dung tin nhắn..."></textarea>
 
             <button id="loadUsers">Tải danh sách</button>
@@ -79,6 +86,19 @@
 
             <button id="sendNow">Gửi ngay</button>
             <button id="scheduleSend">Gửi theo lịch</button>
+            <br>
+            <label for="timeSelect">Chọn thời gian:</label>
+            <select id="timeSelect">
+                <option value="1">1 phút</option>
+                <option value="2">2 phút</option>
+                <option value="5">5 phút</option>
+                <option value="1h">1 giờ</option>
+                <option value="2h">2 giờ</option>
+                <option value="1d">1 ngày</option>
+                <option value="2d">2 ngày</option>
+                <!-- Các tùy chọn khác -->
+            </select>
+            <br>
 
             <p id="statusMessage"></p>
             <br>

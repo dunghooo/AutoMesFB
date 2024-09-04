@@ -1,8 +1,13 @@
-const accessToken = 'EAARTW9C9r7UBOykGuRZBaz9DmrczwqZCZBihbOaJHsSrfxbwjBDQQDo5jZAfTlXajQ43RN9pa98koXpqRe8HJn69nsc9KoW3tNNcnCn397kZARZBMPNExPfApKoxhCz0XOTI81M2NdVuliAAUiF5ZA0QlCWjeb63DZAm9HYzsor5XXWILTZAAPk1pNgDVQpm6FunQ'; // Thay thế với Access Token thực của bạn
-const pageId = '389312490936052'; // ID của trang Facebook
-
 document.getElementById('loadUsers').addEventListener('click', function () {
     const userListElement = document.getElementById('userList');
+    const accessToken = document.getElementById('accessToken').value; // Lấy access token từ trường nhập liệu
+    const pageId = document.getElementById('pageId').value; // Lấy page ID từ trường nhập liệu
+
+    if (!accessToken || !pageId) {
+        userListElement.innerHTML = "Vui lòng nhập Access Token và Page ID.";
+        return;
+    }
+
     userListElement.innerHTML = "Đang tải...";
 
     fetch(`https://graph.facebook.com/v20.0/${pageId}/conversations?access_token=${accessToken}`)
@@ -54,10 +59,21 @@ document.getElementById('loadUsers').addEventListener('click', function () {
 document.getElementById('sendNow').addEventListener('click', function () {
     const userListElement = document.getElementById('userList');
     const message = document.querySelector('textarea').value; // Lấy nội dung tin nhắn từ textarea
+    const accessToken = document.getElementById('accessToken').value; // Lấy access token từ trường nhập liệu
     const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
+
+    if (!accessToken) {
+        userListElement.innerHTML = "Vui lòng nhập Access Token.";
+        return;
+    }
 
     if (selectedUsers.length === 0) {
         userListElement.innerHTML = "Vui lòng chọn ít nhất một người dùng.";
+        return;
+    }
+
+    if (!message) {
+        userListElement.innerHTML = "Vui lòng nhập nội dung tin nhắn.";
         return;
     }
 
@@ -96,3 +112,88 @@ document.getElementById('sendNow').addEventListener('click', function () {
             });
     });
 });
+
+document.getElementById('scheduleSend').addEventListener('click', function () {
+    const userListElement = document.getElementById('userList');
+    const message = document.querySelector('textarea').value; // Lấy nội dung tin nhắn từ textarea
+    const accessToken = document.getElementById('accessToken').value; // Lấy access token từ trường nhập liệu
+    const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
+    const timeSelect = document.getElementById('timeSelect').value; // Lấy thời gian đã chọn từ dropdown
+
+    if (!accessToken) {
+        userListElement.innerHTML = "Vui lòng nhập Access Token.";
+        return;
+    }
+
+    if (selectedUsers.length === 0) {
+        userListElement.innerHTML = "Vui lòng chọn ít nhất một người dùng.";
+        return;
+    }
+
+    if (!message) {
+        userListElement.innerHTML = "Vui lòng nhập nội dung tin nhắn.";
+        return;
+    }
+
+    if (!timeSelect) {
+        userListElement.innerHTML = "Vui lòng chọn thời gian gửi.";
+        return;
+    }
+
+    let delay;
+
+    // Xử lý thời gian đã chọn và chuyển đổi thành milliseconds
+    if (timeSelect.endsWith('h')) {
+        // Nếu giá trị kết thúc bằng 'h', nó là giờ
+        const hours = parseInt(timeSelect); // Lấy số giờ
+        delay = hours * 60 * 60 * 1000; // Chuyển đổi giờ thành milliseconds
+    } else if (timeSelect.endsWith('d')) {
+        // Nếu giá trị kết thúc bằng 'd', nó là ngày
+        const days = parseInt(timeSelect); // Lấy số ngày
+        delay = days * 24 * 60 * 60 * 1000; // Chuyển đổi ngày thành milliseconds
+    } else {
+        // Nếu không phải giờ hoặc ngày, giả sử là phút
+        const minutes = parseInt(timeSelect); // Lấy số phút
+        delay = minutes * 60 * 1000; // Chuyển đổi phút thành milliseconds
+    }
+
+    userListElement.innerHTML = `Tin nhắn sẽ được gửi sau ${delay / 60000} phút...`;
+
+    setTimeout(() => {
+        userListElement.innerHTML = "Đang gửi tin nhắn...";
+
+        selectedUsers.forEach(checkbox => {
+            const userId = checkbox.value; // Lấy userId từ checkbox value
+
+            fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    recipient: {
+                        id: userId
+                    },
+                    message: {
+                        text: message
+                    },
+                    tag: 'CONFIRMED_EVENT_UPDATE' // Sử dụng thẻ phù hợp với trường hợp của bạn
+                })
+            })
+                .then(response => response.json())
+                .then(sendResponse => {
+                    if (sendResponse.error) {
+                        console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
+                    } else {
+                        const userDiv = document.createElement('div');
+                        userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
+                        userListElement.appendChild(userDiv);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
+                });
+        });
+    }, delay);
+});
+
