@@ -88,16 +88,8 @@
             <button id="scheduleSend">Gửi theo lịch</button>
             <br>
             <label for="timeSelect">Chọn thời gian:</label>
-            <select id="timeSelect">
-                <option value="1">1 phút</option>
-                <option value="2">2 phút</option>
-                <option value="5">5 phút</option>
-                <option value="1h">1 giờ</option>
-                <option value="2h">2 giờ</option>
-                <option value="1d">1 ngày</option>
-                <option value="2d">2 ngày</option>
-                <!-- Các tùy chọn khác -->
-            </select>
+            <input type="datetime-local" id="scheduleTime" />
+
             <br>
 
             <p id="statusMessage"></p>

@@ -115,55 +115,48 @@ document.getElementById('sendNow').addEventListener('click', function () {
 
 document.getElementById('scheduleSend').addEventListener('click', function () {
     const userListElement = document.getElementById('userList');
-    const message = document.querySelector('textarea').value; // Lấy nội dung tin nhắn từ textarea
-    const accessToken = document.getElementById('accessToken').value; // Lấy access token từ trường nhập liệu
+    const message = document.querySelector('textarea').value;
+    const accessToken = document.getElementById('accessToken').value;
     const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
-    const timeSelect = document.getElementById('timeSelect').value; // Lấy thời gian đã chọn từ dropdown
+    const scheduleTime = document.getElementById('scheduleTime').value; // Get the selected date and time
 
     if (!accessToken) {
-        userListElement.innerHTML = "Vui lòng nhập Access Token.";
+        alert("Vui lòng nhập Access Token.");
         return;
     }
 
     if (selectedUsers.length === 0) {
-        userListElement.innerHTML = "Vui lòng chọn ít nhất một người dùng.";
+        alert("Vui lòng chọn ít nhất một người dùng.");
         return;
     }
 
     if (!message) {
-        userListElement.innerHTML = "Vui lòng nhập nội dung tin nhắn.";
+        alert("Vui lòng nhập nội dung tin nhắn.");
         return;
     }
 
-    if (!timeSelect) {
-        userListElement.innerHTML = "Vui lòng chọn thời gian gửi.";
+    if (!scheduleTime) {
+        alert("Vui lòng chọn ngày và giờ gửi.");
         return;
     }
 
-    let delay;
+    // Calculate the delay in milliseconds from the current time to the scheduled time
+    const now = new Date();
+    const sendTime = new Date(scheduleTime);
+    const delay = sendTime.getTime() - now.getTime();
 
-    // Xử lý thời gian đã chọn và chuyển đổi thành milliseconds
-    if (timeSelect.endsWith('h')) {
-        // Nếu giá trị kết thúc bằng 'h', nó là giờ
-        const hours = parseInt(timeSelect); // Lấy số giờ
-        delay = hours * 60 * 60 * 1000; // Chuyển đổi giờ thành milliseconds
-    } else if (timeSelect.endsWith('d')) {
-        // Nếu giá trị kết thúc bằng 'd', nó là ngày
-        const days = parseInt(timeSelect); // Lấy số ngày
-        delay = days * 24 * 60 * 60 * 1000; // Chuyển đổi ngày thành milliseconds
-    } else {
-        // Nếu không phải giờ hoặc ngày, giả sử là phút
-        const minutes = parseInt(timeSelect); // Lấy số phút
-        delay = minutes * 60 * 1000; // Chuyển đổi phút thành milliseconds
+    if (delay < 0) {
+        alert("Thời gian gửi phải lớn hơn thời gian hiện tại.");
+        return;
     }
 
-    userListElement.innerHTML = `Tin nhắn sẽ được gửi sau ${delay / 60000} phút...`;
+    userListElement.innerHTML = `Tin nhắn sẽ được gửi vào ${sendTime.toLocaleString()}...`;
 
     setTimeout(() => {
         userListElement.innerHTML = "Đang gửi tin nhắn...";
 
         selectedUsers.forEach(checkbox => {
-            const userId = checkbox.value; // Lấy userId từ checkbox value
+            const userId = checkbox.value;
 
             fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
                 method: 'POST',
@@ -177,23 +170,23 @@ document.getElementById('scheduleSend').addEventListener('click', function () {
                     message: {
                         text: message
                     },
-                    tag: 'CONFIRMED_EVENT_UPDATE' // Sử dụng thẻ phù hợp với trường hợp của bạn
+                    tag: 'CONFIRMED_EVENT_UPDATE'
                 })
             })
-                .then(response => response.json())
-                .then(sendResponse => {
-                    if (sendResponse.error) {
-                        console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
-                    } else {
-                        const userDiv = document.createElement('div');
-                        userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
-                        userListElement.appendChild(userDiv);
-                    }
-                })
-                .catch(error => {
-                    console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
-                });
+            .then(response => response.json())
+            .then(sendResponse => {
+                if (sendResponse.error) {
+                    console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
+                } else {
+                    const userDiv = document.createElement('div');
+                    userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
+                    userListElement.appendChild(userDiv);
+                }
+            })
+            .catch(error => {
+                console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
+            });
         });
     }, delay);
 });
-
+    
