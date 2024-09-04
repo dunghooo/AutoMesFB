@@ -13,6 +13,6 @@
     },
     "action": {
         "default_popup": "./public/extention/popup.html",
-        "default_icon": "./src/images/OIP.g-PMKXEGdnEU8sBg9_X8uwHaHa.png"
+        "default_icon": "./src/images/fbicon.png"
     }
 }
