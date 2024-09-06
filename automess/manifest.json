@@ -1,18 +1,27 @@
 {
-    "manifest_version": 3,
-    "name": "Facebook Auto Messenger",
-    "version": "1.0",
-    "description": "Automatically send messages to users who message your fanpage.",
-    "permissions": [
-        "activeTab",
-        "scripting",
-        "storage"
-    ],
-    "background": {
-        "service_worker": "./public/extention/background.js"
-    },
-    "action": {
-        "default_popup": "./public/extention/popup.html",
-        "default_icon": "./src/images/fbicon.png"
+  "name": "Auto Messenger",
+  "version": "0.1.0",
+  "description": "Automatically send messages to users who message your fanpage.",
+  "author": "Your Name",
+  "manifest_version": 3,
+  "action": {
+    "default_title": "Auto Messenger",
+    "default_popup": "./public/extention/popup.html",
+    "default_icon": "./src/images/fbicon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.facebook.com/*"],
+      "js": ["./public/extention/content.js"]
     }
+  ],
+  "background": {
+    "service_worker": "./public/extention/background.js"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "scripting"
+  ]
 }
