@@ -3,11 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Tải dữ liệu từ localStorage và điền vào các trường input
     const savedAccessToken = localStorage.getItem('accessToken');
     const savedPageId = localStorage.getItem('pageId');
-    
+
     if (savedAccessToken) {
         document.getElementById('accessToken').value = savedAccessToken;
     }
-    
+
     if (savedPageId) {
         document.getElementById('pageId').value = savedPageId;
     }
@@ -36,7 +36,7 @@ document.getElementById('pageId').addEventListener('change', function () {
 function getCurrentDateTime() {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); 
+    const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -48,7 +48,7 @@ document.getElementById('scheduleTime').value = getCurrentDateTime();
 
 document.addEventListener('DOMContentLoaded', function () {
     const tabLinks = document.querySelectorAll('.nav-link');
-    
+
     tabLinks.forEach(link => {
         link.addEventListener('click', function (event) {
             event.preventDefault();
@@ -123,31 +123,49 @@ document.getElementById('loadUsers').addEventListener('click', function () {
         });
 });
 let completedRequests = 0;
-document.getElementById('sendNow').addEventListener('click', function () {
+
+document.getElementById('sendNow').addEventListener('click', function (event) {
+    event.preventDefault(); // Ngăn chặn việc reload trang
+
     const userListElement = document.getElementById('userList');
-    const message = document.querySelector('textarea').value; // Lấy nội dung tin nhắn từ textarea
-    const accessToken = document.getElementById('accessToken').value; // Lấy access token từ trường nhập liệu
+    const message = document.querySelector('textarea').value;
+    const accessToken = document.getElementById('accessToken').value;
     const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
 
-    if (!accessToken) {
-        userListElement.innerHTML = "Vui lòng nhập Access Token.";
-        return;
-    }
+    // Lấy các thẻ p để hiển thị lỗi
+    const userErrorElement = document.getElementById('userError');
+    const messageErrorElement = document.getElementById('messageError');
+
+    // Reset lại thông báo lỗi
+    userErrorElement.style.display = 'none';
+    messageErrorElement.style.display = 'none';
+
+    // Kiểm tra lỗi
+    let hasError = false;
 
     if (selectedUsers.length === 0) {
-        userListElement.innerHTML = "Vui lòng chọn ít nhất một người dùng.";
-        return;
+        userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng.";
+        userErrorElement.style.display = 'block';
+        hasError = true;
     }
 
     if (!message) {
-        userListElement.innerHTML = "Vui lòng nhập nội dung tin nhắn.";
+        messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
+        messageErrorElement.style.display = 'block';
+        hasError = true;
+    }
+
+    // Nếu có lỗi thì không tiếp tục thực hiện
+    if (hasError) {
         return;
     }
 
+    // Chỉ cập nhật giao diện khi đã vượt qua kiểm tra lỗi
     userListElement.innerHTML = "Đang gửi tin nhắn...";
-    completedRequests = 0;
+    completedRequests = 0; // Reset biến completedRequests
+
     selectedUsers.forEach(checkbox => {
-        const userId = checkbox.value; // Lấy userId từ checkbox value
+        const userId = checkbox.value;
 
         fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
             method: 'POST',
@@ -161,34 +179,51 @@ document.getElementById('sendNow').addEventListener('click', function () {
                 message: {
                     text: message
                 },
-                tag: 'CONFIRMED_EVENT_UPDATE' // Sử dụng thẻ phù hợp với trường hợp của bạn
+                tag: 'CONFIRMED_EVENT_UPDATE'
             })
         })
             .then(response => response.json())
             .then(sendResponse => {
                 if (sendResponse.error) {
-                    console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
+                    const errorDiv = document.createElement('div');
+                    errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${sendResponse.error.message}`;
+                    errorDiv.style.color = 'red';
+                    userListElement.appendChild(errorDiv);
                 } else {
                     const userDiv = document.createElement('div');
                     userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
                     userListElement.appendChild(userDiv);
-                    completedRequests++;
-                    if (completedRequests === selectedUsers.length) {
-                        // Gọi lại hàm tải danh sách người dùng sau khi tất cả tin nhắn đã được gửi
-                        document.getElementById('loadUsers').click();
-                    }
+                }
+                completedRequests++;
+                if (completedRequests === selectedUsers.length) {
+                    userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn.</div>";
+
+                    // Sau khi hoàn thành, đợi 2 giây rồi load lại danh sách người dùng
+                    setTimeout(() => {
+                        document.getElementById('loadUsers').click(); // Gọi lại hàm tải danh sách người dùng
+                    }, 2000);
                 }
             })
             .catch(error => {
-                console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
+                const errorDiv = document.createElement('div');
+                errorDiv.textContent = `Có lỗi xảy ra khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${error.message}`;
+                errorDiv.style.color = 'red';
+                userListElement.appendChild(errorDiv);
                 completedRequests++;
                 if (completedRequests === selectedUsers.length) {
-                  
-                    document.getElementById('loadUsers').click();
+                    userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn với một số lỗi.</div>";
+
+                    // Sau khi hoàn thành, đợi 2 giây rồi load lại danh sách người dùng
+                    setTimeout(() => {
+                        document.getElementById('loadUsers').click(); // Gọi lại hàm tải danh sách người dùng
+                    }, 2000);
                 }
             });
     });
 });
+
+
+
 
 document.getElementById('scheduleSend').addEventListener('click', function () {
     const userListElement = document.getElementById('userList');
@@ -250,30 +285,30 @@ document.getElementById('scheduleSend').addEventListener('click', function () {
                     tag: 'CONFIRMED_EVENT_UPDATE'
                 })
             })
-            .then(response => response.json())
-            .then(sendResponse => {
-                if (sendResponse.error) {
-                    console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
-                } else {
-                    const userDiv = document.createElement('div');
-                    userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
-                    userListElement.appendChild(userDiv);
+                .then(response => response.json())
+                .then(sendResponse => {
+                    if (sendResponse.error) {
+                        console.error(`Error sending message to ${userId}:`, sendResponse.error.message);
+                    } else {
+                        const userDiv = document.createElement('div');
+                        userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
+                        userListElement.appendChild(userDiv);
+                        completedRequests++;
+                        if (completedRequests === selectedUsers.length) {
+                            // Gọi lại hàm tải danh sách người dùng sau khi tất cả tin nhắn đã được gửi
+                            document.getElementById('loadUsers').click();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
                     completedRequests++;
                     if (completedRequests === selectedUsers.length) {
                         // Gọi lại hàm tải danh sách người dùng sau khi tất cả tin nhắn đã được gửi
                         document.getElementById('loadUsers').click();
                     }
-                }
-            })
-            .catch(error => {
-                console.error(`Có lỗi xảy ra khi gửi tin nhắn đến ${userId}:`, error);
-                completedRequests++;
-                if (completedRequests === selectedUsers.length) {
-                    // Gọi lại hàm tải danh sách người dùng sau khi tất cả tin nhắn đã được gửi
-                    document.getElementById('loadUsers').click();
-                }
-            });
+                });
         });
     }, delay);
 });
-    
+
