@@ -770,6 +770,38 @@ existingDiv.innerHTML = `
 
 // Thêm div vào body
 document.body.appendChild(existingDiv);
+
+
+const toggleButton = document.createElement("button");
+toggleButton.id = "my-extension-toggle";
+toggleButton.innerText = "tool";
+toggleButton.style.position = "fixed";
+toggleButton.style.top = "10%";
+toggleButton.style.right = "10px";
+toggleButton.style.zIndex = "100000";
+toggleButton.style.padding = "10px";
+toggleButton.style.backgroundColor = "#007bff";
+toggleButton.style.color = "white";
+toggleButton.style.border = "none";
+toggleButton.style.borderRadius = "5px";
+toggleButton.style.cursor = "pointer";
+
+// Thêm nút vào body
+document.body.appendChild(toggleButton);
+
+// Thêm sự kiện click cho nút
+toggleButton.addEventListener("click", () => {
+    if (existingDiv.style.display === "none") {
+        existingDiv.style.display = "block";
+    } else {
+        existingDiv.style.display = "none";
+    }
+});
+
+
+
+
+
 function formatDateTimeLocal(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
