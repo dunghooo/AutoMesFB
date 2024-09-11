@@ -1,11 +1,14 @@
-// background.js
 chrome.runtime.onInstalled.addListener(() => {
-    console.log("Extension Installed");
+    console.log('Extension installed');
 });
 
-// Lắng nghe tin nhắn từ content.js
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "openPopup") {
-        chrome.action.openPopup();
-    }
+chrome.action.onClicked.addListener(() => {
+    chrome.windows.create({
+        url: chrome.runtime.getURL('/public/extention/popup.html'),
+        type: 'popup',
+        width: 400,
+        height: 600,
+        top: 100,
+        left: 100
+    });
 });

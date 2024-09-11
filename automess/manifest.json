@@ -6,22 +6,29 @@
   "manifest_version": 3,
   "action": {
     "default_title": "Auto Messenger",
-    "default_popup": "./public/extention/popup.html",
+    "default_popup": "/public/extention/popup.html",
     "default_icon": "./src/images/fbicon.png"
   },
+  "host_permissions": [
+        "*://www.facebook.com/*"
+    ],
   "content_scripts": [
     {
       "matches": ["*://*.facebook.com/*"],
-      "js": ["./public/extention/content.js"]
+      "js": ["./public/extention/content.js"],
+      "run_at": "document_end",
+      "all_frames": true
     }
   ],
   "background": {
-    "service_worker": "./public/extention/background.js"
+    "service_worker": "./public/extention/background.js",
+    "persistent": false
   },
   "permissions": [
     "storage",
     "tabs",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms"
   ]
 }

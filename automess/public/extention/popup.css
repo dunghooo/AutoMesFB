@@ -4,7 +4,10 @@
 }
 
 
-
+#my-extension-popup {
+  border: 1px solid #ccc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
 .token {
   margin-bottom: -15px;
 }
@@ -641,4 +644,23 @@ footer {
   color: #0866ff;
   font-size: 25px;
   font-weight: 800;
+}
+
+
+/* Tùy chỉnh nút icon */
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+/* Tùy chỉnh dropdown chứa các icon */
+#iconDropdown {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 200px;
+  border-radius: 5px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
