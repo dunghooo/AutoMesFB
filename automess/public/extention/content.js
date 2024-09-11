@@ -1,7 +1,7 @@
 const existingDiv = document.createElement("div");
 existingDiv.id = "my-extension-popup";
 existingDiv.style.position = "fixed";
-existingDiv.style.top = "0";
+existingDiv.style.top = "10%";
 existingDiv.style.right = "0";
 existingDiv.style.width = "400px";
 existingDiv.style.height = "600px";
@@ -725,12 +725,14 @@ existingDiv.innerHTML = `
                                 
                             </div>
                             <div id="selectAllDiv">
-        <input type="checkbox" id="selectAll">
-        <label for="selectAll">Chọn tất cả</label>
-    </div>
-                            <div class="user-list" id="userList" style="color: black;">
-                                <!-- Danh sách người dùng sẽ được thêm vào đây -->
+                                <input type="checkbox" id="selectAll">
+                                <label for="selectAll">Chọn tất cả</label>
                             </div>
+                            <div id="status">Đang tải.11..</div>
+                            <div class="user-list" id="userList" style="color: black;">
+                                <!-- Danh sách người dùng sẽ được thêm vào đây  do-->
+                            </div>
+
                             <div class="error-messages">
                                 <p id="userError" style="color: red; display: none;"></p>
                                 <p id="messageError" style="color: red; display: none;"></p>
@@ -761,27 +763,6 @@ existingDiv.innerHTML = `
                 </div>
             </div>
         </div>
-        <div class="col-2 icon-side">
-            <div class="mt-2 logo-side">
-                <img id="logo" class="img-fluid img-shadow" src="/public/extention/img/logo vietstar.svg" alt="">
-            </div>
-            <div class="mt-4 robot">
-                <a href=""><img src="/public/extention/img/icon robot check.svg" alt="robot check"></a>
-            </div>
-            <div class="mt-3 edit">
-                <a href="#"><img src="/public/extention/img/icon edit.svg" alt="edit"></a>
-            </div>
-            <div class="icon-finish mt-auto">
-                <div class="mt-3 call">
-                    <a href="#"><img src="/public/extention/img/icon call.svg" alt="call"></a>
-                </div>
-                <div class="mt-3 power">
-                    <a href="#"><img src="/public/extention/img/icon power.svg" alt="power"></a>
-                </div>
-                <div class="mt-3 user">
-                    <a href="#"><img src="/public/extention/img/icon user.svg" alt="user"></a>
-                </div>
-            </div>
         </div>
         
     </body>
@@ -851,154 +832,147 @@ document.querySelector("textarea").addEventListener("input", function () {
 
 
 
-
 document.getElementById('loadUsers').addEventListener('click', function () {
-  const userListElement = document.getElementById('userList');
-  const accessToken = document.getElementById('accessToken').value;
-  const pageId = document.getElementById('pageId').value;
+    const userListElement = document.getElementById('userList');
+    const selectAllDiv = document.getElementById('selectAllDiv');
+    const accessToken = document.getElementById('accessToken').value;
+    const pageId = document.getElementById('pageId').value;
 
-  if (!accessToken || !pageId) {
-      userListElement.innerHTML = "Vui lòng nhập Access Token và Page ID.";
-      return;
-  }
+    if (!accessToken || !pageId) {
+        userListElement.innerHTML = "Vui lòng nhập Access Token và Page ID.";
+        return;
+    }
 
-  userListElement.innerHTML = "Đang tải...";
-  const years = [2020, 2021, 2022, 2023, 2024]; // Adjust the years as needed
-  let allConversations = [];
-  let totalUsers = 0; // Total users to be loaded
-  const checkedUsers = new Set(); // To keep track of selected users
-  const pageSize = 50; // Number of users per page
-  let currentPage = 0; // Current page index
+    // Display loading message
+    userListElement.innerHTML = '';
+    selectAllDiv.style.display = 'block'; // Ensure the "Select All" checkbox is visible
 
-  function updateStatus(message) {
-      const statusElement = document.getElementById('status');
-      if (statusElement) {
-          statusElement.textContent = message;
-      }
-  }
+    const pageSize = 100; // Number of users per page
+    let allConversations = [];
+    let currentPage = 0; // Current page index
+    const checkedUsers = new Set(); // To keep track of selected users
 
-  function loadConversationsForYear(year) {
-      const yearStart = `${year}-01-01`;
-      const yearEnd = `${year}-12-31`;
-      let nextPageUrl = `https://graph.facebook.com/v20.0/${pageId}/conversations?access_token=${accessToken}&since=${yearStart}&until=${yearEnd}`;
+    function updateStatus(message) {
+        const statusElement = document.getElementById('status');
+        if (statusElement) {
+            statusElement.textContent = message;
+        }
+    }
 
-      function loadConversations(url) {
-          return fetch(url)
-              .then(response => response.json())
-              .then(data => {
-                  allConversations = allConversations.concat(data.data);
-                  totalUsers += data.data.length; // Update the total number of users
-                  updateStatus(`Đang tải ${totalUsers} người dùng...`);
-                  if (data.paging && data.paging.next) {
-                      return loadConversations(data.paging.next);
-                  } else {
-                      return allConversations;
-                  }
-              })
-              .catch(error => {
-                  console.error('Error:', error);
-              });
-      }
+    function loadConversationsForPage(page) {
+        const start = page * pageSize;
+        const end = start + pageSize;
+        const conversationsToLoad = allConversations.slice(start, end);
 
-      return loadConversations(nextPageUrl);
-  }
+        function renderPage() {
+            userListElement.innerHTML = '';
 
-  function displayConversations(conversations) {
-      userListElement.innerHTML = '';
+            const userPromises = conversationsToLoad.map(conversation => {
+                const userId = conversation.id;
+                return fetch(`https://graph.facebook.com/v20.0/${userId}?fields=senders&access_token=${accessToken}`)
+                    .then(response => response.json())
+                    .then(userData => {
+                        const userName = userData.senders.data[0].name; // Assuming the first sender is the user
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'user-item';
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.value = userData.senders.data[0].id; // Store user ID in checkbox value
+                        checkbox.classList.add('user-checkbox'); // Add class for easier selection
+                        checkbox.checked = checkedUsers.has(checkbox.value);
+                        checkbox.addEventListener('change', function () {
+                            if (this.checked) {
+                                checkedUsers.add(this.value);
+                            } else {
+                                checkedUsers.delete(this.value);
+                            }
+                        });
+                        userDiv.appendChild(checkbox);
+                        userDiv.appendChild(document.createTextNode(` ${userName}`));
+                        userListElement.appendChild(userDiv);
+                    });
+            });
 
-      // Create "Select All" checkbox within user list
-      const selectAllDiv = document.createElement('div');
-      const selectAllCheckbox = document.createElement('input');
-      selectAllCheckbox.type = 'checkbox';
-      selectAllCheckbox.id = 'selectAll';
-      selectAllDiv.appendChild(selectAllCheckbox);
-      selectAllDiv.appendChild(document.createTextNode(' Chọn tất cả'));
-      userListElement.appendChild(selectAllDiv);
+            // Wait until all user data is loaded
+            Promise.all(userPromises).then(() => {
+                // Pagination controls
+                const paginationDiv = document.createElement('div');
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Previous';
+                prevButton.disabled = currentPage === 0;
+                prevButton.addEventListener('click', () => {
+                    currentPage--;
+                    loadConversationsForPage(currentPage);
+                });
+                paginationDiv.appendChild(prevButton);
 
-      selectAllCheckbox.addEventListener('change', function () {
-          const allCheckboxes = document.querySelectorAll('.user-checkbox');
-          allCheckboxes.forEach(checkbox => {
-              checkbox.checked = this.checked;
-              if (this.checked) {
-                  checkedUsers.add(checkbox.value);
-              } else {
-                  checkedUsers.delete(checkbox.value);
-              }
-          });
-      });
+                const nextButton = document.createElement('button');
+                nextButton.textContent = 'Next';
+                nextButton.disabled = end >= allConversations.length;
+                nextButton.addEventListener('click', () => {
+                    currentPage++;
+                    loadConversationsForPage(currentPage);
+                });
+                paginationDiv.appendChild(nextButton);
 
-      function renderPage(page) {
-          userListElement.innerHTML = '';
+                userListElement.appendChild(paginationDiv);
+                updateStatus("Tất cả người dùng đã được tải xong.");
+            });
+        }
 
-          const start = page * pageSize;
-          const end = Math.min(start + pageSize, conversations.length);
+        renderPage();
+    }
 
-          for (let i = start; i < end; i++) {
-              const conversation = conversations[i];
-              const userId = conversation.id;
-              fetch(`https://graph.facebook.com/v20.0/${userId}?fields=senders&access_token=${accessToken}`)
-                  .then(response => response.json())
-                  .then(userData => {
-                      const userName = userData.senders.data[0].name; // Assuming the first sender is the user
-                      const userDiv = document.createElement('div');
-                      userDiv.className = 'user-item';
-                      const checkbox = document.createElement('input');
-                      checkbox.type = 'checkbox';
-                      checkbox.value = userData.senders.data[0].id; // Store user ID in checkbox value
-                      checkbox.classList.add('user-checkbox'); // Add class for easier selection
-                      checkbox.checked = checkedUsers.has(checkbox.value);
-                      checkbox.addEventListener('change', function () {
-                          if (this.checked) {
-                              checkedUsers.add(this.value);
-                          } else {
-                              checkedUsers.delete(this.value);
-                          }
-                      });
-                      userDiv.appendChild(checkbox);
-                      userDiv.appendChild(document.createTextNode(` ${userName}`));
-                      userListElement.appendChild(userDiv);
-                  });
-          }
+    function loadAllConversations() {
+        userListElement.innerHTML = "Đang tải dữ liệu...";
 
-          // Pagination controls
-          const paginationDiv = document.createElement('div');
-          const prevButton = document.createElement('button');
-          prevButton.textContent = 'Previous';
-          prevButton.disabled = currentPage === 0;
-          prevButton.addEventListener('click', () => {
-              currentPage--;
-              renderPage(currentPage);
-          });
-          paginationDiv.appendChild(prevButton);
+        let nextPageUrl = `https://graph.facebook.com/v20.0/${pageId}/conversations?access_token=${accessToken}`;
 
-          const nextButton = document.createElement('button');
-          nextButton.textContent = 'Next';
-          nextButton.disabled = end >= conversations.length;
-          nextButton.addEventListener('click', () => {
-              currentPage++;
-              renderPage(currentPage);
-          });
-          paginationDiv.appendChild(nextButton);
+        function loadConversations(url) {
+            return fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    allConversations = allConversations.concat(data.data);
+                    if (data.paging && data.paging.next) {
+                        return loadConversations(data.paging.next);
+                    } else {
+                        // All data loaded, start rendering the first page
+                        loadConversationsForPage(currentPage);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
 
-          userListElement.appendChild(paginationDiv);
-      }
+        loadConversations(nextPageUrl);
+    }
 
-      renderPage(currentPage);
+    function updateSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.addEventListener('change', function () {
+            const allCheckboxes = document.querySelectorAll('.user-checkbox');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+                if (this.checked) {
+                    checkedUsers.add(checkbox.value);
+                } else {
+                    checkedUsers.delete(checkbox.value);
+                }
+            });
+        });
+    }
 
-      // Notify user when all data is loaded
-      updateStatus("Tất cả người dùng đã được tải xong.");
-  }
+    function resetSelectAll() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.checked = false; // Reset the "Select All" checkbox
+    }
 
-  function loadAllYears(years) {
-      const yearPromises = years.map(year => loadConversationsForYear(year));
-      Promise.all(yearPromises)
-          .then(() => {
-              displayConversations(allConversations);
-          });
-  }
-
-  loadAllYears(years);
+    updateSelectAll();
+    loadAllConversations();
 });
+
+
 
 
 
@@ -1079,15 +1053,105 @@ document.getElementById('loadUsers').addEventListener('click', function () {
 //   loadConversations(nextPageUrl);
 // });
 
+// document.getElementById("sendNow").addEventListener("click", function (event) {
+//   event.preventDefault();
+
+//   const userListElement = document.getElementById("userList");
+//   const message = document.querySelector("textarea").value;
+//   const accessToken = document.getElementById("accessToken").value;
+//   const selectedUsers = document.querySelectorAll(
+//     'input[type="checkbox"].user-checkbox:checked'
+//   );
+
+//   const userErrorElement = document.getElementById("userError");
+//   const messageErrorElement = document.getElementById("messageError");
+
+//   userErrorElement.style.display = "none";
+//   messageErrorElement.style.display = "none";
+
+//   let hasError = false;
+
+//   if (selectedUsers.length === 0) {
+//     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng.";
+//     userErrorElement.style.display = "block";
+//     hasError = true;
+//   }
+
+//   if (!message) {
+//     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
+//     messageErrorElement.style.display = "block";
+//     hasError = true;
+//   }
+
+//   if (hasError) {
+//     return;
+//   }
+
+//   userListElement.innerHTML = "Đang gửi tin nhắn...";
+//   completedRequests = 0;
+
+//   selectedUsers.forEach((checkbox) => {
+//     const userId = checkbox.value;
+
+//     fetch(
+//       `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
+//       {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           recipient: {
+//             id: userId,
+//           },
+//           message: {
+//             text: message,
+//           },
+//           tag: "CONFIRMED_EVENT_UPDATE",
+//         }),
+//       }
+//     )
+//       .then((response) => response.json())
+//       .then((sendResponse) => {
+//         if (sendResponse.error) {
+//           const errorDiv = document.createElement("div");
+//           errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${
+//             sendResponse.error.message
+//           }`;
+//           errorDiv.style.color = "red";
+//           userListElement.appendChild(errorDiv);
+//         } else {
+//           const userDiv = document.createElement("div");
+//           userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
+//           userListElement.appendChild(userDiv);
+//         }
+//         completedRequests++;
+//         if (completedRequests === selectedUsers.length) {
+//           userListElement.innerHTML +=
+//             "<div>Hoàn thành việc gửi tin nhắn.</div>";
+//           setTimeout(() => {
+//             userListElement.innerHTML = "";
+//           }, 5000);
+//         }
+//       })
+//       .catch((error) => {
+//         userListElement.innerHTML += `<div>Có lỗi xảy ra: ${error.message}</div>`;
+//         console.error("Error:", error);
+//       });
+//   });
+// });
+
+
+
+
+
 document.getElementById("sendNow").addEventListener("click", function (event) {
   event.preventDefault();
 
   const userListElement = document.getElementById("userList");
   const message = document.querySelector("textarea").value;
   const accessToken = document.getElementById("accessToken").value;
-  const selectedUsers = document.querySelectorAll(
-    'input[type="checkbox"].user-checkbox:checked'
-  );
+  const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
 
   const userErrorElement = document.getElementById("userError");
   const messageErrorElement = document.getElementById("messageError");
@@ -1113,10 +1177,30 @@ document.getElementById("sendNow").addEventListener("click", function (event) {
     return;
   }
 
-  userListElement.innerHTML = "Đang gửi tin nhắn...";
-  completedRequests = 0;
+  // Load sent users from local storage
+  const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-  selectedUsers.forEach((checkbox) => {
+  // Filter out users who have been sent messages within the last 24 hours
+  const usersToSend = Array.from(selectedUsers).filter(checkbox => {
+    const userId = checkbox.value;
+    const lastSent = sentUsers.find(user => user.id === userId);
+    if (lastSent && new Date(lastSent.timestamp) > oneDayAgo) {
+      return false; // Skip users who were sent messages in the last 24 hours
+    }
+    return true;
+  });
+
+  if (usersToSend.length === 0) {
+    userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 24 giờ qua.";
+    return;
+  }
+
+  userListElement.innerHTML = "Đang gửi tin nhắn...";
+  let completedRequests = 0;
+
+  usersToSend.forEach((checkbox) => {
     const userId = checkbox.value;
 
     fetch(
@@ -1137,35 +1221,56 @@ document.getElementById("sendNow").addEventListener("click", function (event) {
         }),
       }
     )
-      .then((response) => response.json())
-      .then((sendResponse) => {
-        if (sendResponse.error) {
-          const errorDiv = document.createElement("div");
-          errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${
-            sendResponse.error.message
-          }`;
-          errorDiv.style.color = "red";
-          userListElement.appendChild(errorDiv);
-        } else {
-          const userDiv = document.createElement("div");
-          userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
-          userListElement.appendChild(userDiv);
-        }
-        completedRequests++;
-        if (completedRequests === selectedUsers.length) {
-          userListElement.innerHTML +=
-            "<div>Hoàn thành việc gửi tin nhắn.</div>";
-          setTimeout(() => {
-            userListElement.innerHTML = "";
-          }, 5000);
-        }
-      })
-      .catch((error) => {
-        userListElement.innerHTML += `<div>Có lỗi xảy ra: ${error.message}</div>`;
-        console.error("Error:", error);
-      });
+    .then((response) => response.json())
+    .then((sendResponse) => {
+      if (sendResponse.error) {
+        const errorDiv = document.createElement("div");
+        errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${sendResponse.error.message}`;
+        errorDiv.style.color = "red";
+        userListElement.appendChild(errorDiv);
+      } else {
+        const userDiv = document.createElement("div");
+        userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
+        userListElement.appendChild(userDiv);
+
+        // Update local storage with sent users
+        sentUsers.push({ id: userId, timestamp: now });
+        localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
+      }
+      completedRequests++;
+      if (completedRequests === usersToSend.length) {
+        userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn.</div>";
+        setTimeout(() => {
+          userListElement.innerHTML = "";
+        }, 5000);
+      }
+    })
+    .catch((error) => {
+      userListElement.innerHTML += `<div>Có lỗi xảy ra: ${error.message}</div>`;
+      console.error("Error:", error);
+    });
   });
 });
+
+// Clear localStorage every day
+function clearExpiredSentUsers() {
+  const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const updatedSentUsers = sentUsers.filter(user => new Date(user.timestamp) > oneDayAgo);
+  localStorage.setItem('sentUsers', JSON.stringify(updatedSentUsers));
+}
+
+// Call the function to clear expired users when the script loads
+clearExpiredSentUsers();
+
+
+
+
+
+
+
 document.getElementById("scheduleSend").addEventListener("click", function () {
   const userListElement = document.getElementById("userList");
   const message = document.querySelector("textarea").value;
