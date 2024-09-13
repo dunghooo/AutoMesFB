@@ -1340,6 +1340,9 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
       errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${error.message}`;
       errorDiv.style.color = "red";
       userListElement.appendChild(errorDiv);
+      setTimeout(() => {
+        document.getElementById("loadUsers").click(); 
+      }, 2000);
     }
 
     completedRequests++;
