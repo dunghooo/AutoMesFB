@@ -1107,14 +1107,14 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   // Load sent users from local storage
   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
   const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+  const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
-  // Filter out users who have been sent messages within the last 24 hours
+  // Filter out users who have been sent messages within the last hour
   const usersToSend = Array.from(selectedUsers).filter(checkbox => {
     const userId = checkbox.value;
     const lastSent = sentUsers.find(user => user.id === userId);
-    if (lastSent && new Date(lastSent.timestamp) > oneDayAgo) {
-      return false; // Skip users who were sent messages in the last 24 hours
+    if (lastSent && new Date(lastSent.timestamp) > oneHourAgo) {
+      return false; // Skip users who were sent messages in the last 1 hour
     }
     return true;
   });
@@ -1127,10 +1127,22 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   userListElement.innerHTML = "Đang gửi tin nhắn...";
   let completedRequests = 0;
 
-  for (const checkbox of usersToSend) {
+  // Function to create a delay between requests
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  for (let i = 0; i < usersToSend.length; i++) {
+    const checkbox = usersToSend[i];
     const userId = checkbox.value;
 
     try {
+      // Nếu không phải là người đầu tiên, thêm độ trễ ngẫu nhiên từ 1 đến 2 phút
+      if (i !== 0) {
+        const randomDelay = Math.floor(Math.random() * 5000) + 1000; // 1 to 2 minutes (60000ms to 120000ms)
+        await delay(randomDelay);
+      }
+
       // Gửi tin nhắn văn bản nếu có tin nhắn
       if (message) {
         await fetch(
@@ -1189,6 +1201,8 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
     }
   }
 });
+
+
 
 
 
