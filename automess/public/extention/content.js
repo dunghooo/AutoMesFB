@@ -691,7 +691,21 @@ existingDiv.innerHTML = `
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
                   }
             
+  .sent-user-list {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 5px;
+    overflow-y: auto;
+  background-color: #f9f9f9;
+  height:50px;
+}
 
+.user-item {
+  margin: 5px 0;
+  padding: 5px;
+  border-bottom: 1px solid #eee;
+}
         </style>
     </head>
     <body>
@@ -738,7 +752,10 @@ existingDiv.innerHTML = `
                             <div class="user-list" id="userList" style="color: black;">
                                 <!-- Danh sách người dùng sẽ được thêm vào đây  do-->
                             </div>
-
+                                <div class="sent-user-list" id="sentUserList" style="color: black;">
+  <!-- Danh sách người dùng đã gửi tin nhắn sẽ được thêm vào đây -->
+  <div class="pagination" id="paginationSentUserList"></div>
+</div>
                             <div class="error-messages">
                                 <p id="userError" style="color: red; display: none;"></p>
                                 <p id="messageError" style="color: red; display: none;"></p>
@@ -870,9 +887,9 @@ document.querySelector("textarea").addEventListener("input", function () {
 
 
 
-
 document.getElementById('loadUsers').addEventListener('click', function () {
   const userListElement = document.getElementById('userList');
+  const sentUserListElement = document.getElementById('sentUserList');
   const selectAllDiv = document.getElementById('selectAllDiv');
   const accessToken = document.getElementById('accessToken').value;
   const pageId = document.getElementById('pageId').value;
@@ -884,6 +901,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
 
   // Display loading message
   userListElement.innerHTML = '';
+  sentUserListElement.innerHTML = ''; // Clear the sent users list initially
   selectAllDiv.style.display = 'block'; // Ensure the "Select All" checkbox is visible
 
   const pageSize = 100; // Number of users per page
@@ -909,6 +927,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
       const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000); // Kiểm tra trong vòng 1 giờ
 
       userListElement.innerHTML = '';
+      sentUserListElement.innerHTML = '';
 
       const userPromises = conversationsToLoad.map(conversation => {
         const userId = conversation.id;
@@ -930,6 +949,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
             if (lastSent && new Date(lastSent.timestamp) > oneHourAgo) {
               checkbox.disabled = true; // Disable checkbox nếu đã gửi trong 1 giờ qua
               userDiv.appendChild(document.createTextNode(` ${userName} (Đã gửi trong 1 giờ qua)`));
+              sentUserListElement.appendChild(userDiv); // Thêm vào danh sách người đã gửi
             } else {
               // Chỉ thêm checkbox nếu người dùng có thể nhận tin nhắn
               userDiv.appendChild(checkbox);
@@ -944,9 +964,8 @@ document.getElementById('loadUsers').addEventListener('click', function () {
                 }
               });
               userDiv.appendChild(document.createTextNode(` ${userName}`));
+              userListElement.appendChild(userDiv);
             }
-
-            userListElement.appendChild(userDiv);
           });
       });
 
@@ -1030,6 +1049,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
   updateSelectAll();
   loadAllConversations();
 });
+
 
 
 let selectedFiles = []; // Biến toàn cục để lưu các tệp đã chọn
