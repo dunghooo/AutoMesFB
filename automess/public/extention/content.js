@@ -1118,9 +1118,10 @@ document.getElementById("sendNow").addEventListener("click", function (event) {
         if (completedRequests === usersToSend.length) {
           userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn.</div>";
           setTimeout(() => {
-            userListElement.innerHTML = "";
-          }, 5000);
+            document.getElementById("loadUsers").click(); // Gọi lại hàm tải danh sách người dùng
+          }, 2000);
         }
+       
       })
       .catch((error) => {
         userListElement.innerHTML += `<div>Có lỗi xảy ra: ${error.message}</div>`;
