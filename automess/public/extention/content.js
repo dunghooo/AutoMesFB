@@ -721,10 +721,10 @@ existingDiv.innerHTML = `
                               <button id="selectFileButton" type="button">Chọn tệp</button>
   
   <!-- Input để chọn tệp (ẩn đi) -->
-  <input type="file" id="fileInput" style="display:none;" />
+<input type="file" id="fileInput" style="display:none;" multiple />
 
   <!-- Hiển thị tên file đã chọn -->
-  <p id="fileName"></p>
+  <p id="fileNames"></p>
 
                             <div class="button-user">
                                 <button type="button" id="loadUsers">LOAD USERS</button>
@@ -1032,208 +1032,46 @@ document.getElementById('loadUsers').addEventListener('click', function () {
 });
 
 
-let selectedFile = null; // Biến toàn cục để lưu tệp đã chọn
+let selectedFiles = []; // Biến toàn cục để lưu các tệp đã chọn
 
 // Khi nhấn nút "Chọn tệp", mở hộp thoại chọn tệp
 document.getElementById('selectFileButton').addEventListener('click', () => {
   document.getElementById('fileInput').click(); // Kích hoạt input file
 });
 
-// Khi người dùng chọn tệp, xử lý tệp đó
+// Khi người dùng chọn tệp, xử lý các tệp đó
 document.getElementById('fileInput').addEventListener('change', (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    selectedFile = file; // Lưu tệp vào biến toàn cục
+  const files = event.target.files;
+  if (files.length > 0) {
+    selectedFiles = Array.from(files); // Lưu các tệp vào biến toàn cục
 
-    // Hiển thị tên tệp
-    document.getElementById('fileName').textContent = `Đã chọn tệp: ${file.name}`;
+    // Hiển thị tên các tệp
+    const fileNamesElement = document.getElementById('fileNames');
+    fileNamesElement.textContent = `Đã chọn tệp: ${selectedFiles.map(file => file.name).join(', ')}`;
 
-    // Tạo URL để hiển thị bản xem trước ảnh
-    if (file.type.startsWith("image/")) {
-      const imageUrl = URL.createObjectURL(file);
-      const imagePreviewElement = document.createElement('img');
-      imagePreviewElement.src = imageUrl;
-      imagePreviewElement.style.maxWidth = "200px"; // Đặt kích thước tối đa cho ảnh
-      imagePreviewElement.style.display = "block";
+    // Tạo URL để hiển thị bản xem trước ảnh cho các tệp hình ảnh
+    selectedFiles.forEach(file => {
+      if (file.type.startsWith("image/")) {
+        const imageUrl = URL.createObjectURL(file);
+        const imagePreviewElement = document.createElement('img');
+        imagePreviewElement.src = imageUrl;
+        imagePreviewElement.style.maxWidth = "200px"; // Đặt kích thước tối đa cho ảnh
+        imagePreviewElement.style.display = "block";
 
-      // Xóa ảnh cũ nếu có
-      const existingPreview = document.getElementById('imagePreview');
-      if (existingPreview) {
-        existingPreview.remove();
+        // Xóa ảnh cũ nếu có
+        const existingPreview = document.getElementById('imagePreview');
+        if (existingPreview) {
+          existingPreview.remove();
+        }
+
+        imagePreviewElement.id = 'imagePreview'; // Đặt ID cho ảnh xem trước
+        fileNamesElement.appendChild(imagePreviewElement);
       }
-
-      imagePreviewElement.id = 'imagePreview'; // Đặt ID cho ảnh xem trước
-      document.getElementById('fileName').appendChild(imagePreviewElement);
-    }
+    });
   }
 });
 
-// document.getElementById('sendNow').addEventListener('click', async (event) => {
-//   event.preventDefault();
 
-//   const accessToken = document.getElementById('accessToken').value;
-
-//   if (!selectedFile) {
-//     alert("Vui lòng chọn tệp trước khi gửi.");
-//     return;
-//   }
-
-//   // Tạo FormData để gửi tệp
-//   const formData = new FormData();
-//   formData.append('recipient', JSON.stringify({ id: 'USER_ID' })); // USER_ID là id người nhận
-//   formData.append('message', JSON.stringify({ attachment: { type: 'image', payload: { is_reusable: true } } }));
-//   formData.append('filedata', selectedFile); // Tệp được chọn
-
-//   try {
-//     const response = await axios.post(
-//       `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
-//       formData,
-//       {
-//         headers: {
-//           'Content-Type': 'multipart/form-data',
-//         },
-//       }
-//     );
-
-//     if (response.data.error) {
-//       console.error("Lỗi khi gửi ảnh:", response.data.error.message);
-//       alert(`Lỗi: ${response.data.error.message}`);
-//     } else {
-//       alert('Gửi hình thành công!');
-//     }
-//   } catch (error) {
-//     console.error('Error uploading file:', error);
-//     alert('Có lỗi khi đẩy tệp lên.');
-//   }
-// });
-
-
-
-// document.getElementById("sendNow").addEventListener("click", async function (event) {
-//   event.preventDefault();
-
-//   const userListElement = document.getElementById("userList");
-//   const message = document.querySelector("textarea").value;
-//   const accessToken = document.getElementById("accessToken").value;
-//   const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
-
-//   const userErrorElement = document.getElementById("userError");
-//   const messageErrorElement = document.getElementById("messageError");
-
-//   userErrorElement.style.display = "none";
-//   messageErrorElement.style.display = "none";
-
-//   let hasError = false;
-
-//   if (selectedUsers.length === 0) {
-//     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng.";
-//     userErrorElement.style.display = "block";
-//     hasError = true;
-//   }
-
-//   if (!message && !selectedFile) {
-//     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
-//     messageErrorElement.style.display = "block";
-//     hasError = true;
-//   }
-
-//   if (hasError) {
-//     return;
-//   }
-
-//   // Load sent users from local storage
-//   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
-//   const now = new Date();
-//   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-//   // Filter out users who have been sent messages within the last 24 hours
-//   const usersToSend = Array.from(selectedUsers).filter(checkbox => {
-//     const userId = checkbox.value;
-//     const lastSent = sentUsers.find(user => user.id === userId);
-//     if (lastSent && new Date(lastSent.timestamp) > oneDayAgo) {
-//       return false; // Skip users who were sent messages in the last 24 hours
-//     }
-//     return true;
-//   });
-
-//   if (usersToSend.length === 0) {
-//     userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 24 giờ qua.";
-//     return;
-//   }
-
-//   userListElement.innerHTML = "Đang gửi tin nhắn...";
-//   let completedRequests = 0;
-
-//   // Gửi tin nhắn và tệp (nếu có) đến từng người dùng
-//   for (let checkbox of usersToSend) {
-//     const userId = checkbox.value;
-
-//     try {
-//       // Gửi tệp nếu có tệp
-//       if (selectedFile) {
-//         const formData = new FormData();
-//         formData.append("recipient", JSON.stringify({ id: userId }));
-//         formData.append("message", JSON.stringify({ attachment: { type: fileName, payload: { is_reusable: true } } }));
-//         formData.append("filedata", selectedFile);
-//         formData.append("tag", "CONFIRMED_EVENT_UPDATE");
-
-//         await fetch(
-//           `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
-//           formData,
-//           {
-//             headers: {
-//               "Content-Type": "multipart/form-data",
-//             },
-//           }
-//         );
-//       }
-
-//       // Gửi tin nhắn văn bản
-//       if (message) {
-//         await fetch(
-//           `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
-//           {
-//             method: "POST",
-//             headers: {
-//               "Content-Type": "application/json",
-//             },
-//             body: JSON.stringify({
-//               recipient: {
-//                 id: userId,
-//               },
-//               message: {
-//                 text: message,
-//               },
-//               tag: "CONFIRMED_EVENT_UPDATE",
-//             }),
-//           }
-//         );
-//       }
-
-//       const userDiv = document.createElement("div");
-//       userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
-//       userListElement.appendChild(userDiv);
-
-//       // Update local storage with sent users
-//       sentUsers.push({ id: userId, timestamp: now });
-//       localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
-
-//     } catch (error) {
-//       const errorDiv = document.createElement("div");
-//       errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${error.message}`;
-//       errorDiv.style.color = "red";
-//       userListElement.appendChild(errorDiv);
-//     }
-
-//     completedRequests++;
-//     if (completedRequests === usersToSend.length) {
-//       userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn.</div>";
-//       setTimeout(() => {
-//         userListElement.innerHTML = "";
-//       }, 5000);
-//     }
-//   }
-// });
 document.getElementById("sendNow").addEventListener("click", async function (event) {
   event.preventDefault();
 
@@ -1256,7 +1094,7 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
     hasError = true;
   }
 
-  if (!message && !selectedFile) {
+  if (selectedFiles.length === 0 && !message) {
     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
     messageErrorElement.style.display = "block";
     hasError = true;
@@ -1269,7 +1107,7 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   // Load sent users from local storage
   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
   const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
   // Filter out users who have been sent messages within the last 24 hours
   const usersToSend = Array.from(selectedUsers).filter(checkbox => {
@@ -1282,7 +1120,7 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   });
 
   if (usersToSend.length === 0) {
-    userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 24 giờ qua.";
+    userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
     return;
   }
 
@@ -1293,23 +1131,6 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
     const userId = checkbox.value;
 
     try {
-      // Gửi tệp nếu có tệp
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append("recipient", JSON.stringify({ id: userId }));
-        formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
-        formData.append("filedata", selectedFile);
-        formData.append("tag", "CONFIRMED_EVENT_UPDATE");
-
-        await fetch(
-          `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-      }
-
       // Gửi tin nhắn văn bản nếu có tin nhắn
       if (message) {
         await fetch(
@@ -1324,6 +1145,23 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
               message: { text: message },
               tag: "CONFIRMED_EVENT_UPDATE",
             }),
+          }
+        );
+      }
+
+      // Gửi từng tệp tin nếu có
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("recipient", JSON.stringify({ id: userId }));
+        formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+        formData.append("filedata", file);
+        formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
+        await fetch(
+          `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
+          {
+            method: "POST",
+            body: formData,
           }
         );
       }
@@ -1354,113 +1192,6 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
 
 
-// document.getElementById("sendNow").addEventListener("click", function (event) {
-//   event.preventDefault();
-
-//   const userListElement = document.getElementById("userList");
-//   const message = document.querySelector("textarea").value;
-//   const accessToken = document.getElementById("accessToken").value;
-//   const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
-
-//   const userErrorElement = document.getElementById("userError");
-//   const messageErrorElement = document.getElementById("messageError");
-
-//   userErrorElement.style.display = "none";
-//   messageErrorElement.style.display = "none";
-
-//   let hasError = false;
-
-//   if (selectedUsers.length === 0) {
-//     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng.";
-//     userErrorElement.style.display = "block";
-//     hasError = true;
-//   }
-
-//   if (!message) {
-//     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
-//     messageErrorElement.style.display = "block";
-//     hasError = true;
-//   }
-
-//   if (hasError) {
-//     return;
-//   }
-
-//   // Load sent users from local storage
-//   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
-//   const now = new Date();
-//   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-//   // Filter out users who have been sent messages within the last 24 hours
-//   const usersToSend = Array.from(selectedUsers).filter(checkbox => {
-//     const userId = checkbox.value;
-//     const lastSent = sentUsers.find(user => user.id === userId);
-//     if (lastSent && new Date(lastSent.timestamp) > oneDayAgo) {
-//       return false; // Skip users who were sent messages in the last 24 hours
-//     }
-//     return true;
-//   });
-
-//   if (usersToSend.length === 0) {
-//     userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 24 giờ qua.";
-//     return;
-//   }
-
-//   userListElement.innerHTML = "Đang gửi tin nhắn...";
-//   let completedRequests = 0;
-
-//   usersToSend.forEach((checkbox) => {
-//     const userId = checkbox.value;
-
-//     fetch(
-//       `https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`,
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           recipient: {
-//             id: userId,
-//           },
-//           message: {
-//             text: message,
-//           },
-//           tag: "CONFIRMED_EVENT_UPDATE",
-//         }),
-//       }
-//     )
-//       .then((response) => response.json())
-//       .then((sendResponse) => {
-//         if (sendResponse.error) {
-//           const errorDiv = document.createElement("div");
-//           errorDiv.textContent = `Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${sendResponse.error.message}`;
-//           errorDiv.style.color = "red";
-//           userListElement.appendChild(errorDiv);
-//         } else {
-//           const userDiv = document.createElement("div");
-//           userDiv.textContent = `Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}`;
-//           userListElement.appendChild(userDiv);
-
-//           // Update local storage with sent users
-//           sentUsers.push({ id: userId, timestamp: now });
-//           localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
-//         }
-//         completedRequests++;
-//         if (completedRequests === usersToSend.length) {
-//           userListElement.innerHTML += "<div>Hoàn thành việc gửi tin nhắn.</div>";
-//           setTimeout(() => {
-//             document.getElementById("loadUsers").click(); // Gọi lại hàm tải danh sách người dùng
-//           }, 2000);
-//         }
-       
-//       })
-//       .catch((error) => {
-//         userListElement.innerHTML += `<div>Có lỗi xảy ra: ${error.message}</div>`;
-//         console.error("Error:", error);
-//       });
-//   });
-// });
 
 
 // Clear localStorage every day
@@ -1475,12 +1206,6 @@ function clearExpiredSentUsers() {
 
 // Call the function to clear expired users when the script loads
 clearExpiredSentUsers();
-
-
-
-
-
-
 
 document.getElementById("scheduleSend").addEventListener("click", function () {
   const userListElement = document.getElementById("userList");
