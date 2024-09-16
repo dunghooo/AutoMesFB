@@ -705,6 +705,11 @@ existingDiv.innerHTML = `
             display: flex;
             margin-bottom: 20px;
             color:black;
+             position: sticky;
+    top: 0;
+    background-color: #f1f1f1;
+    z-index: 1000;
+    display: flex;
         }
         .tab-button {
             flex: 1;
@@ -745,12 +750,11 @@ existingDiv.innerHTML = `
         </style>
     </head>
     <body>
-        <div class="popup-content">
-        <!-- Tab Navigation -->
-        <div class="tabs">
+     <div class="tabs">
             <div class="tab-button active" data-target="#form-tab">Setting</div>
             <div class="tab-button" data-target="#other-tab">Send</div>
         </div>
+        <div class="popup-content">
 
         <!-- Tab Content -->
         <div class="tab-content active" id="form-tab">
@@ -815,11 +819,15 @@ existingDiv.innerHTML = `
                     <div id="selectAllDiv" class="d-flex justify-content-start">
                         <input class="me-2" type="checkbox" id="selectAll">
                         <label for="selectAll">Chọn tất cả</label>
+                        <br>
+                         <div id="selectedCount" style="    margin-left:5px;color:black;font-weight: bold; margin-top: 5px;">
+                    đã chọn: <span id="selectedCountValue">0</span>
+                </div>
                     </div>
-                    <div id="totalCount" style="font-weight: bold; margin-bottom: 10px;">
-    Tổng số người dùng: <span id="totalCountValue">0</span>
+                    <div id="totalCount" style="color:black;font-weight: bold; margin-bottom: 10px;">
+    Số Lượng: <span id="totalCountValue">0</span>
 </div>
-                    <div id="status">Đang tải...</div>
+                    <div id="status" style="color:black;">Đang tải...</div>
                     <div class="user-list" id="userList" style="color: black;">
                         <!-- Danh sách người dùng sẽ được thêm vào đây -->
                     </div>
@@ -950,7 +958,6 @@ document.querySelector("textarea").addEventListener("input", function () {
 
 
 
-
 document.getElementById('loadUsers').addEventListener('click', function () {
   const userListElement = document.getElementById('userList');
   const sentUserListElement = document.getElementById('sentUserList');
@@ -1022,6 +1029,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
                           } else {
                               checkedUsers.delete(this.value);
                           }
+                          updateSelectedCount(); // Cập nhật số lượng người dùng được chọn
                       });
                       userDiv.appendChild(document.createTextNode(` ${userName}`));
                       userListElement.appendChild(userDiv);
@@ -1073,12 +1081,18 @@ document.getElementById('loadUsers').addEventListener('click', function () {
                   }
               }
           });
+          updateSelectedCount(); // Cập nhật số lượng người dùng được chọn khi chọn tất cả
       });
+  }
+
+  function updateSelectedCount() {
+      document.getElementById('selectedCountValue').textContent = checkedUsers.size;
   }
 
   function resetSelectAll() {
       const selectAllCheckbox = document.getElementById('selectAll');
       selectAllCheckbox.checked = false; // Đặt lại checkbox "Chọn tất cả"
+      updateSelectedCount(); // Cập nhật số lượng người dùng được chọn
   }
 
   updateSelectAll();
