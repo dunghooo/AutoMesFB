@@ -47,14 +47,7 @@ existingDiv.innerHTML = `
           }
 
 
-          .user-list {
-            margin-top: 10px;
-            max-height: 300px;
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 5px;
-          }
+       
 
           .user-list div {
             margin-bottom: 5px;
@@ -96,7 +89,8 @@ existingDiv.innerHTML = `
 
           .user-list {
             margin: 0 auto 20px auto;
-            max-height: 300px;
+            max-height: 600px;
+            height:600px;
             overflow-y: auto;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -691,103 +685,156 @@ existingDiv.innerHTML = `
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
                   }
             
-  .sent-user-list {
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin: 10px;
-  border-radius: 5px;
-    overflow-y: auto;
-  background-color: #f9f9f9;
-  height:50px;
-}
+                  .sent-user-list {
+                  border: 1px solid #ddd;
+                  padding: 10px;
+                  margin: 10px;
+                  border-radius: 5px;
+                    overflow-y: auto;
+                  background-color: #f9f9f9;
+                  height:50px;
+                }
 
-.user-item {
-  margin: 5px 0;
-  padding: 5px;
-  border-bottom: 1px solid #eee;
-}
+                .user-item {
+                  margin: 5px 0;
+                  padding: 5px;
+                  border-bottom: 1px solid #eee;
+                }
+                   
+         .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            color:black;
+        }
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            background: #f1f1f1;
+            font-weight: bold;
+        }
+        .tab-button.active {
+            background: white;
+            border-bottom: 1px solid white;
+        }
+        .tab-content {
+            display: none;
+            padding: 15px;
+            border: 1px solid #ddd;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .col-12 {
+            width: 100%;
+            padding: 5px;
+        }
+        .col-6 {
+            width: 50%;
+            padding: 5px;
+        }
         </style>
     </head>
     <body>
         <div class="popup-content">
-            <div class="tab-content col-12">
-                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="pills-home-tab"><br>
-                    <div class="row">
-                        <form>
-                            <div class="round">
-                                <h4 class="title">Auto Facebook Message</h4>
-                            </div>
-                            <div class="col-12 token">
-                                <label for="accessToken" style="color: black;">Token 1</label>
-                                <div class="input-group">
-                                    <input type="text" id="accessToken" placeholder="Nhập Access Token..." />
-                                </div>
-                            </div>
-                            <div class="col-12 pageid">
-                                <label for="pageId" style="color: black;">Pages ID</label>
-                                <input type="text" id="pageId" placeholder="Nhập Page ID..." />
-                            </div>
-                            <label for="pageId" style="color: black;">Message</label>
-                            <div class="col-12">
-                                <textarea placeholder="Enter message content..."></textarea>
-                            </div>
-                            div>
-                              <button id="selectFileButton" type="button">Chọn tệp</button>
-  
-  <!-- Input để chọn tệp (ẩn đi) -->
-<input type="file" id="fileInput" style="display:none;" multiple />
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <div class="tab-button active" data-target="#form-tab">Setting</div>
+            <div class="tab-button" data-target="#other-tab">Send</div>
+        </div>
 
-  <!-- Hiển thị tên file đã chọn -->
-  <p id="fileNames"></p>
-
-                            <div class="button-user">
-                                <button type="button" id="loadUsers">LOAD USERS</button>
-                                
-                            </div>
-                            <div id="selectAllDiv" class="d-flex justify-content-start">
-                                <input class="me-2" type="checkbox" id="selectAll">
-                                <label for="selectAll">Chọn tất cả</label>
-                            </div>
-                            <div id="status">Đang tải.11..</div>
-                            <div class="user-list" id="userList" style="color: black;">
-                                <!-- Danh sách người dùng sẽ được thêm vào đây  do-->
-                            </div>
-                                <div class="sent-user-list" id="sentUserList" style="color: black;">
-  <!-- Danh sách người dùng đã gửi tin nhắn sẽ được thêm vào đây -->
-  <div class="pagination" id="paginationSentUserList"></div>
-</div>
-                            <div class="error-messages">
-                                <p id="userError" style="color: red; display: none;"></p>
-                                <p id="messageError" style="color: red; display: none;"></p>
-                            </div>
-                            <br>
-                            <div class="send-div">
-                                <button id="sendNow">SEND NOW</button>
-                            </div>
-                            <br/>
-                            <br/>
-                            <div class="check col-12">
-                                <div class="time col-12">
-                                    <div class="day col-6">
-                                        <div>
-                                            <input style="font-size: 20px;" type="datetime-local" id="scheduleTime" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+        <!-- Tab Content -->
+        <div class="tab-content active" id="form-tab">
+            <div class="row">
+                <form>
+                    <div class="round">
+                        <h4 class="title">Auto Facebook Message</h4>
+                    </div>
+                    <div class="error-messages">
+                        <p id="userError" style="color: red; display: none;"></p>
+                        <p id="messageError" style="color: red; display: none;"></p>
+                    </div>
+                    <div class="col-12 token">
+                        <label for="accessToken" style="color: black;">Token</label>
+                        <div class="input-group">
+                            <input type="text" id="accessToken" placeholder="Nhập Access Token..." />
+                        </div>
+                    </div>
+                    <div class="col-12 pageid">
+                        <label for="pageId" style="color: black;">Pages ID</label>
+                        <input type="text" id="pageId" placeholder="Nhập Page ID..." />
+                    </div>
+                    <label for="message" style="color: black;">Message</label>
+                    <div class="col-12">
+                        <textarea id="message" placeholder="Enter message content..."></textarea>
+                    </div>
+                    <div>
+                        <button id="selectFileButton" type="button">Chọn tệp</button>
+                        <input type="file" id="fileInput" style="display:none;" multiple />
+                        <p id="fileNames"></p>
+                    </div>
+                     <br>
+                    <div class="send-div">
+                        <button id="sendNow">SEND NOW</button>
                     </div>
                     <br>
-                    <footer>
+                    <div class="check col-12">
+                        <div class="time col-12">
+                            <div class="day col-6">
+                                <div>
+                                    <input style="font-size: 20px;" type="datetime-local" id="scheduleTime" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                </form>
+            </div>
+             <br>
+               <footer>
                         <div class="send-cal">
                             <button style="height: 45px;" id="scheduleSend">SEND SCHEDULE</button>
                         </div>
                     </footer>
-                    <br>
-                </div>
+        </div>
+
+        <div class="tab-content" id="other-tab">
+            <div class="row">
+                <form>
+                    <div class="button-user">
+                        <button type="button" id="loadUsers">LOAD USERS</button>
+                    </div>
+                    <div id="selectAllDiv" class="d-flex justify-content-start">
+                        <input class="me-2" type="checkbox" id="selectAll">
+                        <label for="selectAll">Chọn tất cả</label>
+                    </div>
+                    <div id="totalCount" style="font-weight: bold; margin-bottom: 10px;">
+    Tổng số người dùng: <span id="totalCountValue">0</span>
+</div>
+                    <div id="status">Đang tải...</div>
+                    <div class="user-list" id="userList" style="color: black;">
+                        <!-- Danh sách người dùng sẽ được thêm vào đây -->
+                    </div>
+                    <div class="sent-user-list" id="sentUserList" style="color: black;">
+                        <!-- Danh sách người dùng đã gửi tin nhắn sẽ được thêm vào đây -->
+                        <div class="pagination" id="paginationSentUserList"></div>
+                    </div>
+                    
+                    
+                </form>
             </div>
+            
         </div>
-        </div>
+    </div>
+
         
     </body>
 `;
@@ -813,6 +860,22 @@ toggleButton.style.cursor = "pointer";
 // Thêm nút vào body
 document.body.appendChild(toggleButton);
 
+const tabButtons = document.querySelectorAll('.tab-button');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const target = document.querySelector(this.dataset.target);
+
+        // Xóa lớp active từ tất cả các nút và phần tử tab
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Thêm lớp active vào nút được nhấp và phần tử tab tương ứng
+        this.classList.add('active');
+        target.classList.add('active');
+    });
+});
 // Thêm sự kiện click cho nút
 toggleButton.addEventListener("click", () => {
   if (existingDiv.style.display === "none") {
@@ -887,6 +950,7 @@ document.querySelector("textarea").addEventListener("input", function () {
 
 
 
+
 document.getElementById('loadUsers').addEventListener('click', function () {
   const userListElement = document.getElementById('userList');
   const sentUserListElement = document.getElementById('sentUserList');
@@ -895,33 +959,26 @@ document.getElementById('loadUsers').addEventListener('click', function () {
   const pageId = document.getElementById('pageId').value;
 
   if (!accessToken || !pageId) {
-    userListElement.innerHTML = "Vui lòng nhập Access Token và Page ID.";
-    return;
+      userListElement.innerHTML = "Vui lòng nhập Access Token và Page ID.";
+      return;
   }
 
-  // Display loading message
-  userListElement.innerHTML = '';
-  sentUserListElement.innerHTML = ''; // Clear the sent users list initially
-  selectAllDiv.style.display = 'block'; // Ensure the "Select All" checkbox is visible
+  // Hiển thị thông báo đang tải
+  userListElement.innerHTML = 'Đang tải dữ liệu...';
+  sentUserListElement.innerHTML = ''; // Xóa danh sách người đã gửi tin nhắn
+  selectAllDiv.style.display = 'block'; // Đảm bảo checkbox "Chọn tất cả" được hiển thị
 
-  const pageSize = 100; // Number of users per page
   let allConversations = [];
-  let currentPage = 0; // Current page index
-  const checkedUsers = new Set(); // To keep track of selected users
+  const checkedUsers = new Set(); // Để theo dõi các người dùng đã chọn
 
   function updateStatus(message) {
-    const statusElement = document.getElementById('status');
-    if (statusElement) {
-      statusElement.textContent = message;
-    }
+      const statusElement = document.getElementById('status');
+      if (statusElement) {
+          statusElement.textContent = message;
+      }
   }
 
-  function loadConversationsForPage(page) {
-    const start = page * pageSize;
-    const end = start + pageSize;
-    const conversationsToLoad = allConversations.slice(start, end);
-
-    function renderPage() {
+  function renderAllConversations() {
       const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
       const now = new Date();
       const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000); // Kiểm tra trong vòng 1 giờ
@@ -929,121 +986,99 @@ document.getElementById('loadUsers').addEventListener('click', function () {
       userListElement.innerHTML = '';
       sentUserListElement.innerHTML = '';
 
-      const userPromises = conversationsToLoad.map(conversation => {
-        const userId = conversation.id;
-        return fetch(`https://graph.facebook.com/v20.0/${userId}?fields=senders&access_token=${accessToken}`)
-          .then(response => response.json())
-          .then(userData => {
-            const userName = userData.senders.data[0].name; // Assuming the first sender is the user
-            const userDiv = document.createElement('div');
-            userDiv.className = 'user-item';
+      // Tính số lượng người dùng
+      let totalUserCount = 0;
 
-            // Tạo checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = userData.senders.data[0].id; // Store user ID in checkbox value
-            checkbox.classList.add('user-checkbox'); // Add class for easier selection
+      allConversations.forEach(conversation => {
+          const userId = conversation.id;
+          fetch(`https://graph.facebook.com/v20.0/${userId}?fields=senders&access_token=${accessToken}`)
+              .then(response => response.json())
+              .then(userData => {
+                  const userName = userData.senders.data[0].name; // Giả sử người gửi đầu tiên là người dùng
+                  const userDiv = document.createElement('div');
+                  userDiv.className = 'user-item';
 
-            // Kiểm tra xem người dùng đã nhận tin nhắn trong vòng 1 giờ qua chưa
-            const lastSent = sentUsers.find(user => user.id === userData.senders.data[0].id);
-            if (lastSent && new Date(lastSent.timestamp) > oneHourAgo) {
-              checkbox.disabled = true; // Disable checkbox nếu đã gửi trong 1 giờ qua
-              userDiv.appendChild(document.createTextNode(` ${userName} (Đã gửi trong 1 giờ qua)`));
-              sentUserListElement.appendChild(userDiv); // Thêm vào danh sách người đã gửi
-            } else {
-              // Chỉ thêm checkbox nếu người dùng có thể nhận tin nhắn
-              userDiv.appendChild(checkbox);
-              checkbox.checked = checkedUsers.has(checkbox.value);
+                  // Tạo checkbox
+                  const checkbox = document.createElement('input');
+                  checkbox.type = 'checkbox';
+                  checkbox.value = userData.senders.data[0].id; // Lưu ID người dùng vào giá trị của checkbox
+                  checkbox.classList.add('user-checkbox'); // Thêm lớp để dễ dàng chọn
 
-              // Sự kiện khi checkbox được thay đổi
-              checkbox.addEventListener('change', function () {
-                if (this.checked) {
-                  checkedUsers.add(this.value);
-                } else {
-                  checkedUsers.delete(this.value);
-                }
+                  // Kiểm tra xem người dùng đã nhận tin nhắn trong vòng 1 giờ qua chưa
+                  const lastSent = sentUsers.find(user => user.id === userData.senders.data[0].id);
+                  if (lastSent && new Date(lastSent.timestamp) > oneHourAgo) {
+                      checkbox.disabled = true; // Vô hiệu hóa checkbox nếu đã gửi trong 1 giờ qua
+                      userDiv.appendChild(document.createTextNode(` ${userName} (Đã gửi trong 1 giờ qua)`));
+                      sentUserListElement.appendChild(userDiv); // Thêm vào danh sách người đã gửi
+                  } else {
+                      // Chỉ thêm checkbox nếu người dùng có thể nhận tin nhắn
+                      userDiv.appendChild(checkbox);
+                      checkbox.checked = checkedUsers.has(checkbox.value);
+
+                      // Sự kiện khi checkbox được thay đổi
+                      checkbox.addEventListener('change', function () {
+                          if (this.checked) {
+                              checkedUsers.add(this.value);
+                          } else {
+                              checkedUsers.delete(this.value);
+                          }
+                      });
+                      userDiv.appendChild(document.createTextNode(` ${userName}`));
+                      userListElement.appendChild(userDiv);
+                  }
+
+                  // Cập nhật số lượng người dùng
+                  totalUserCount++;
+                  document.getElementById('totalCountValue').textContent = totalUserCount;
               });
-              userDiv.appendChild(document.createTextNode(` ${userName}`));
-              userListElement.appendChild(userDiv);
-            }
-          });
       });
 
-      // Chờ đến khi tất cả dữ liệu người dùng được tải
-      Promise.all(userPromises).then(() => {
-        // Phần xử lý phân trang
-        const paginationDiv = document.createElement('div');
-        const prevButton = document.createElement('button');
-        prevButton.textContent = 'Previous';
-        prevButton.disabled = currentPage === 0;
-        prevButton.addEventListener('click', () => {
-          currentPage--;
-          loadConversationsForPage(currentPage);
-        });
-        paginationDiv.appendChild(prevButton);
-
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next';
-        nextButton.disabled = end >= allConversations.length;
-        nextButton.addEventListener('click', () => {
-          currentPage++;
-          loadConversationsForPage(currentPage);
-        });
-        paginationDiv.appendChild(nextButton);
-
-        userListElement.appendChild(paginationDiv);
-        updateStatus("Tất cả người dùng đã được tải xong.");
-      });
-    }
-
-    renderPage();
+      updateStatus("Tất cả người dùng đã được tải xong.");
   }
 
   function loadAllConversations() {
-    userListElement.innerHTML = "Đang tải dữ liệu...";
+      let nextPageUrl = `https://graph.facebook.com/v20.0/${pageId}/conversations?access_token=${accessToken}`;
 
-    let nextPageUrl = `https://graph.facebook.com/v20.0/${pageId}/conversations?access_token=${accessToken}`;
+      function loadConversations(url) {
+          return fetch(url)
+              .then(response => response.json())
+              .then(data => {
+                  allConversations = allConversations.concat(data.data);
+                  if (data.paging && data.paging.next) {
+                      return loadConversations(data.paging.next);
+                  } else {
+                      // Tất cả dữ liệu đã được tải, bắt đầu hiển thị tất cả
+                      renderAllConversations();
+                  }
+              })
+              .catch(error => {
+                  console.error('Lỗi:', error);
+              });
+      }
 
-    function loadConversations(url) {
-      return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          allConversations = allConversations.concat(data.data);
-          if (data.paging && data.paging.next) {
-            return loadConversations(data.paging.next);
-          } else {
-            // All data loaded, start rendering the first page
-            loadConversationsForPage(currentPage);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-        });
-    }
-
-    loadConversations(nextPageUrl);
+      loadConversations(nextPageUrl);
   }
 
   function updateSelectAll() {
-    const selectAllCheckbox = document.getElementById('selectAll');
-    selectAllCheckbox.addEventListener('change', function () {
-      const allCheckboxes = document.querySelectorAll('.user-checkbox');
-      allCheckboxes.forEach(checkbox => {
-        if (!checkbox.disabled) { // Bỏ qua checkbox bị disable
-          checkbox.checked = this.checked;
-          if (this.checked) {
-            checkedUsers.add(checkbox.value);
-          } else {
-            checkedUsers.delete(checkbox.value);
-          }
-        }
+      const selectAllCheckbox = document.getElementById('selectAll');
+      selectAllCheckbox.addEventListener('change', function () {
+          const allCheckboxes = document.querySelectorAll('.user-checkbox');
+          allCheckboxes.forEach(checkbox => {
+              if (!checkbox.disabled) { // Bỏ qua checkbox bị disable
+                  checkbox.checked = this.checked;
+                  if (this.checked) {
+                      checkedUsers.add(checkbox.value);
+                  } else {
+                      checkedUsers.delete(checkbox.value);
+                  }
+              }
+          });
       });
-    });
   }
 
   function resetSelectAll() {
-    const selectAllCheckbox = document.getElementById('selectAll');
-    selectAllCheckbox.checked = false; // Reset the "Select All" checkbox
+      const selectAllCheckbox = document.getElementById('selectAll');
+      selectAllCheckbox.checked = false; // Đặt lại checkbox "Chọn tất cả"
   }
 
   updateSelectAll();
@@ -1113,13 +1148,11 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
     userErrorElement.style.display = "block";
     hasError = true;
   }
-
   if (selectedFiles.length === 0 && !message) {
     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
     messageErrorElement.style.display = "block";
     hasError = true;
   }
-
   if (hasError) {
     return;
   }
