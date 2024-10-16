@@ -24,7 +24,7 @@ existingDiv.innerHTML = `
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
         <style>
             body {
@@ -751,6 +751,9 @@ existingDiv.innerHTML = `
             width: 50%;
             padding: 5px;
         }
+        #output{
+        color:black;
+        }
         </style>
     </head>
     <body>
@@ -831,6 +834,13 @@ existingDiv.innerHTML = `
                     <div class="button-user">
                         <button type="button" id="loadUsers">LOAD USERS</button>
                     </div>
+                    <button id="exportButton" style="display:none;"></button>
+<input type="file" id="importExcel" accept=".xlsx, .xls" />
+
+<button id="importButton" style="display:none;"></button>
+<div id="output"></div>
+
+
                       <div>
         <input type="text" id="searchUser" placeholder="Tìm kiếm người dùng..." style="margin-bottom: 10px;">
     </div>
@@ -1147,10 +1157,45 @@ document.getElementById('loadUsers').addEventListener('click', function () {
     selectAllCheckbox.checked = false;
     updateSelectedCount();
   }
+  function exportToExcel() {
+    console.log("User ID:", userId);
+console.log("All Conversations:", allConversations);
 
+    const selectedUsers = Array.from(checkedUsers).map(userId => {
+      const conversation = allConversations.find(conv => conv.id === userId);
+      if (conversation) {
+        const userName = conversation.senders.data[0].name; // Lấy tên người dùng
+        return {
+          id: userId,
+          name: userName,
+          date: new Date().toISOString().split('T')[0] // Ngày hiện tại
+        };
+      }
+      console.log(conversation)
+      return null;
+    }).filter(user => user); // Lọc bỏ các giá trị null
+
+    if (selectedUsers.length === 0) {
+      alert("Vui lòng chọn ít nhất một người dùng để xuất.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(selectedUsers);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Dữ liệu người dùng");
+
+    // Tạo file Excel và tải về
+    const fileName = `du_lieu_nguoi_dung_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  }
+
+  // Thêm sự kiện cho nút xuất
+  document.getElementById('exportButton').addEventListener('click', exportToExcel);
   updateSelectAll();
   loadAllConversations();
 });
+
+
 
 
 
@@ -1194,6 +1239,66 @@ document.getElementById('fileInput').addEventListener('change', (event) => {
   }
 });
 
+
+// Lắng nghe sự kiện khi người dùng chọn file Excel
+document.getElementById('importExcel').addEventListener('change', function (event) {
+  const file = event.target.files[0]; // Lấy file người dùng đã chọn
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+
+    // Giả sử bạn muốn lấy dữ liệu từ sheet đầu tiên
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+
+    // Chuyển dữ liệu sheet thành JSON
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    console.log(jsonData); // In ra dữ liệu từ file Excel
+
+    // Hiển thị dữ liệu từ file Excel ra màn hình
+    displayData(jsonData);
+
+    // Lưu dữ liệu vào localStorage để sử dụng khi gửi tin
+    localStorage.setItem('excelUsers', JSON.stringify(jsonData));
+  };
+
+  reader.readAsArrayBuffer(file); // Đọc file dưới dạng array buffer
+});
+
+// Hàm hiển thị dữ liệu từ file Excel ra dưới dạng bảng
+function displayData(data) {
+  const outputDiv = document.getElementById('output');
+  outputDiv.innerHTML = ''; // Xóa nội dung cũ
+
+  // Hiển thị dữ liệu theo định dạng bảng
+  const table = document.createElement('table');
+  const headerRow = document.createElement('tr');
+
+  // Tạo tiêu đề bảng
+  Object.keys(data[0]).forEach(key => {
+      const th = document.createElement('th');
+      th.textContent = key;
+      headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  // Tạo các hàng cho dữ liệu
+  data.forEach(row => {
+      const tr = document.createElement('tr');
+      Object.values(row).forEach(value => {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+      });
+      table.appendChild(tr);
+  });
+
+  outputDiv.appendChild(table); // Thêm bảng vào output div
+}
+
+// Lắng nghe sự kiện click của nút gửi tin
 document.getElementById("sendNow").addEventListener("click", async function (event) {
   event.preventDefault();
 
@@ -1202,6 +1307,8 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   const accessToken = document.getElementById("accessToken").value;
   const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
   const promotionName = document.getElementById("promotionName").value;
+  const usersFromExcel = JSON.parse(localStorage.getItem('excelUsers')) || [];
+  let selectedFiles = document.getElementById("fileInput").files;
 
   const userErrorElement = document.getElementById("userError");
   const messageErrorElement = document.getElementById("messageError");
@@ -1211,19 +1318,26 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
   let hasError = false;
 
-  // Kiểm tra lỗi
-  if (selectedUsers.length === 0) {
-    userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng.";
-    alert("Chọn người gửi trong mục Send");
+  // Kiểm tra nếu không có người dùng nào được chọn và không có dữ liệu Excel
+  if (usersFromExcel.length === 0 && selectedUsers.length === 0) {
+    userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng hoặc nhập file Excel.";
+    alert("Chọn người gửi hoặc nhập file Excel.");
     userErrorElement.style.display = "block";
     hasError = true;
   }
+
+  // Kiểm tra nếu không có tin nhắn hoặc file được chọn
   if (selectedFiles.length === 0 && !message) {
-    messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
-    alert("Vui lòng nhập tin nhắn hoặc chọn tệp");
+    if (selectedFiles.length === 0) {
+      messageErrorElement.textContent = "Vui lòng chọn tệp.";
+    } else if (!message) {
+      messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
+    }
+    alert(messageErrorElement.textContent);
     messageErrorElement.style.display = "block";
     hasError = true;
   }
+
   if (hasError) {
     return;
   }
@@ -1232,11 +1346,22 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
-  const usersToSend = Array.from(selectedUsers).filter(checkbox => {
-    const userId = checkbox.value;
-    const lastSent = sentUsers.find(user => user.id === userId);
-    return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Chỉ lấy người dùng chưa gửi trong 1 giờ
-  });
+
+  // Nếu có dữ liệu Excel, sử dụng danh sách người dùng từ Excel
+  let usersToSend;
+  if (usersFromExcel.length > 0) {
+    usersToSend = usersFromExcel.filter(user => {
+      const lastSent = sentUsers.find(sentUser => sentUser.id === user.id);
+      return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
+    });
+  } else {
+    // Nếu không có dữ liệu Excel, sử dụng người dùng được chọn từ checkbox
+    usersToSend = Array.from(selectedUsers).filter(checkbox => {
+      const userId = checkbox.value;
+      const lastSent = sentUsers.find(sentUser => sentUser.id === userId);
+      return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
+    });
+  }
 
   if (usersToSend.length === 0) {
     userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
@@ -1255,15 +1380,18 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
   // Gửi tin nhắn cho từng người dùng
   for (let i = 0; i < usersToSend.length; i++) {
-    const checkbox = usersToSend[i];
-    const userId = checkbox.value;
-    const userName = checkbox.parentElement.textContent.trim();
+    const user = usersFromExcel.length > 0 ? usersToSend[i] : usersToSend[i].parentElement;
+    const userId = user.id;
+    const userName = user.name || user.textContent.trim();
+
     try {
-      // Gửi tin nhắn văn bản
+      // Thời gian delay ngẫu nhiên từ 10 đến 30 giây (nếu không phải lần đầu tiên)
       if (i !== 0) {
-        const randomDelay = Math.floor(Math.random() * 20000) + 10000; // Thời gian delay ngẫu nhiên từ 10 đến 30 giây
+        const randomDelay = Math.floor(Math.random() * 20000) + 10000;
         await delay(randomDelay);
       }
+
+      // Gửi tin nhắn văn bản
       if (message) {
         await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
           method: "POST",
@@ -1292,100 +1420,82 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
         });
       }
 
-      userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}</div>`;
+      userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${userName}</div>`;
       sentCount++; // Tăng số lượng đã gửi
-      document.getElementById("sendingStatus").textContent = `Đang gửi tin nhắn: ${sentCount}/${totalUsers}`; // Cập nhật trạng thái
+      document.getElementById("sendingStatus").textContent = `Đang gửi tin nhắn: ${sentCount}/${totalUsers}`;
 
       // Lưu người đã gửi vào localStorage
       sentUsers.push({ id: userId, timestamp: now });
       localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
 
+      // Lưu vào promotion nếu có
       if (promotionName) {
         if (!promotions[promotionName]) {
           promotions[promotionName] = [];
         }
         promotions[promotionName].push({ id: userId, name: userName });
         localStorage.setItem('promotions', JSON.stringify(promotions));
-
-        // Cập nhật select box nếu tên khuyến mãi chưa có
-        const promotionSelect = document.getElementById("promotionSelect");
-        const existingOptions = Array.from(promotionSelect.options).map(option => option.value);
-        if (!existingOptions.includes(promotionName)) {
-          const newOption = document.createElement("option");
-          newOption.value = promotionName;
-          newOption.textContent = promotionName;
-          promotionSelect.appendChild(newOption);
-        }
       }
 
     } catch (error) {
-      userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${error.message}</div>`;
+      userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${userName}: ${error.message}</div>`;
     }
   }
 
-  // Cập nhật trạng thái sau khi hoàn thành
   document.getElementById("sendingStatus").textContent = `Đã gửi tin nhắn thành công: ${sentCount}/${totalUsers}`;
-
-  // Reset lại file input và selectedFiles
-  document.getElementById('fileInput').value = ""; // Đặt lại giá trị của input file
-  selectedFiles = []; // Reset lại mảng tệp đã chọn
-  document.getElementById('fileNames').textContent = ''; // Xóa tên tệp đã chọn
-
   userListElement.innerHTML += "<div>Hoàn thành.</div>";
+
+  // Reset lại file input và message
   setTimeout(() => {
+    document.getElementById('fileInput').value = ""; // Reset input file
+    selectedFiles = []; // Reset lại mảng tệp đã chọn
+    document.getElementById("message").value = ""; // Reset message
     alert("Tin nhắn đã được gửi thành công.");
-    document.getElementById("message").value = "";
-    // Reset file input để cho phép chọn ảnh mới
-    const newFileInput = document.getElementById('fileInput').cloneNode();
-    document.getElementById('fileInput').parentNode.replaceChild(newFileInput, document.getElementById('fileInput'));
-
-    // Thêm lại sự kiện change cho input file mới
-    newFileInput.addEventListener('change', (event) => {
-      const files = event.target.files;
-      if (files.length > 0) {
-        selectedFiles = Array.from(files);
-        updateFilePreview(); // Gọi lại hàm để cập nhật preview
-      }
-    });
-
-    document.getElementById("loadUsers").click(); // Nếu cần load lại danh sách người dùng
+    document.getElementById("loadUsers").click(); 
   }, 2000);
+ 
 });
-
 
 
 
 document.getElementById('exportToExcel').addEventListener('click', function (event) {
   event.preventDefault(); 
-  console.log("Nút xuất Excel đã được nhấn"); // Kiểm tra xem sự kiện có được gọi không
+  console.log("Nút xuất Excel đã được nhấn");
 
   const userListElement = document.getElementById('userList');
   const sentUserListElement = document.getElementById('sentUserList');
-
-  // Lấy danh sách người dùng
+  
   const users = [];
 
-  // Lấy người dùng đã gửi
+  // Lấy danh sách người dùng đã gửi
   const sentUsers = Array.from(sentUserListElement.getElementsByClassName('user-item')).map(item => {
-      const userName = item.textContent.split(' (')[0]; // Lấy tên người dùng
-      return { name: userName, sent: true };
+    const userName = item.textContent.split(' (')[0]; 
+    const userId = item.getAttribute('data-user-id');
+    const timestamp = item.getAttribute('data-timestamp');
+    return { id: userId, name: userName, timestamp: new Date(timestamp), sent: true };
   });
 
   // Lấy người dùng từ userList
   Array.from(userListElement.getElementsByClassName('user-item')).forEach(item => {
-      const checkbox = item.querySelector('input[type="checkbox"]');
-      const userName = item.textContent;
+    const checkbox = item.querySelector('input[type="checkbox"]');
+    const userId = checkbox.value;
+    const userName = item.textContent.trim();
 
-      users.push({
-          name: userName,
-          sent: checkbox && checkbox.disabled // Kiểm tra nếu checkbox bị vô hiệu hóa
-      });
+    // Kiểm tra xem người dùng đã gửi trong 1 giờ chưa
+    const lastSent = sentUsers.find(user => user.id === userId);
+    const canSend = !lastSent || (new Date() - lastSent.timestamp) > 3600000; // 1 giờ = 3600000ms
+
+    users.push({
+      id: userId,
+      name: userName,
+      sent: checkbox.disabled || !canSend
+    });
   });
 
-  // Ghép danh sách đã gửi và danh sách người dùng
-  const finalUserList = [...users, ...sentUsers];
+  // Loại bỏ người dùng trùng lặp bằng cách chỉ giữ người đã gửi
+  const finalUserList = users.filter(user => !sentUsers.some(sentUser => sentUser.id === user.id)).concat(sentUsers);
   console.log(finalUserList); // In ra danh sách người dùng cuối cùng
-  
+
   // Tạo workbook và worksheet
   const worksheet = XLSX.utils.json_to_sheet(finalUserList);
   const workbook = XLSX.utils.book_new();
@@ -1394,6 +1504,48 @@ document.getElementById('exportToExcel').addEventListener('click', function (eve
   // Xuất file
   XLSX.writeFile(workbook, "Danh_sach_nguoi_dung.xlsx");
 });
+
+
+
+// document.getElementById('exportToExcel').addEventListener('click', function (event) {
+//   event.preventDefault(); 
+//   console.log("Nút xuất Excel đã được nhấn"); // Kiểm tra xem sự kiện có được gọi không
+
+//   const userListElement = document.getElementById('userList');
+//   const sentUserListElement = document.getElementById('sentUserList');
+
+//   // Lấy danh sách người dùng
+//   const users = [];
+
+//   // Lấy người dùng đã gửi
+//   const sentUsers = Array.from(sentUserListElement.getElementsByClassName('user-item')).map(item => {
+//       const userName = item.textContent.split(' (')[0]; // Lấy tên người dùng
+//       return { name: userName, sent: true };
+//   });
+
+//   // Lấy người dùng từ userList
+//   Array.from(userListElement.getElementsByClassName('user-item')).forEach(item => {
+//       const checkbox = item.querySelector('input[type="checkbox"]');
+//       const userName = item.textContent;
+
+//       users.push({
+//           name: userName,
+//           sent: checkbox && checkbox.disabled // Kiểm tra nếu checkbox bị vô hiệu hóa
+//       });
+//   });
+
+//   // Ghép danh sách đã gửi và danh sách người dùng
+//   const finalUserList = [...users, ...sentUsers];
+//   console.log(finalUserList); // In ra danh sách người dùng cuối cùng
+  
+//   // Tạo workbook và worksheet
+//   const worksheet = XLSX.utils.json_to_sheet(finalUserList);
+//   const workbook = XLSX.utils.book_new();
+//   XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách người dùng");
+
+//   // Xuất file
+//   XLSX.writeFile(workbook, "Danh_sach_nguoi_dung.xlsx");
+// });
 
 
 
