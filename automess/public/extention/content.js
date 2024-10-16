@@ -1158,7 +1158,7 @@ document.getElementById('loadUsers').addEventListener('click', function () {
   }
   function exportToExcel() {
     console.log("User ID:", userId);
-console.log("All Conversations:", allConversations);
+    console.log("All Conversations:", allConversations);
 
     const selectedUsers = Array.from(checkedUsers).map(userId => {
       const conversation = allConversations.find(conv => conv.id === userId);
@@ -1297,7 +1297,6 @@ function displayData(data) {
   userListDiv.appendChild(table); // Thêm bảng vào userList div
 }
 
-
 document.getElementById("sendNow").addEventListener("click", async function (event) {
   event.preventDefault();
 
@@ -1320,14 +1319,18 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   // Kiểm tra nếu không có người dùng nào được chọn và không có dữ liệu Excel
   if (usersFromExcel.length === 0 && selectedUsers.length === 0) {
     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng hoặc nhập file Excel.";
-    alert(userErrorElement.textContent);
+    alert("Chọn người gửi hoặc nhập file Excel.");
     userErrorElement.style.display = "block";
     hasError = true;
   }
 
   // Kiểm tra nếu không có tin nhắn hoặc file được chọn
   if (selectedFiles.length === 0 && !message) {
-    messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
+    if (selectedFiles.length === 0) {
+      messageErrorElement.textContent = "Vui lòng chọn tệp.";
+    } else if (!message) {
+      messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
+    }
     alert(messageErrorElement.textContent);
     messageErrorElement.style.display = "block";
     hasError = true;
@@ -1338,130 +1341,381 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   }
 
   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
+  const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
   // Nếu có dữ liệu Excel, sử dụng danh sách người dùng từ Excel
-  let usersToSend = [];
+  let usersToSend;
   if (usersFromExcel.length > 0) {
     usersToSend = usersFromExcel.filter(user => {
       const lastSent = sentUsers.find(sentUser => sentUser.id === user.id);
       return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
     });
-  } else {
+
+    if (usersToSend.length === 0) {
+      userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
+      return;
+    }
+
+    userListElement.innerHTML = "Đang gửi tin nhắn...";
+
+    let completedRequests = 0;
+    let sentCount = 0; // Đếm số tin nhắn đã gửi thành công
+    const totalUsers = usersToSend.length; // Tổng số người dùng
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Gửi tin nhắn cho từng người dùng
+    for (let i = 0; i < usersToSend.length; i++) {
+      const user = usersFromExcel.length > 0 ? usersToSend[i] : usersToSend[i].parentElement;
+      const userId = user.id;
+      const userName = user.name || user.textContent.trim();
+
+      try {
+        // Thời gian delay ngẫu nhiên từ 10 đến 30 giây (nếu không phải lần đầu tiên)
+        if (i !== 0) {
+          const randomDelay = Math.floor(Math.random() * 20000) + 10000;
+          await delay(randomDelay);
+        }
+
+        // Gửi tin nhắn văn bản
+        if (message) {
+          await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              recipient: { id: userId },
+              message: { text: message },
+              tag: "CONFIRMED_EVENT_UPDATE",
+            }),
+          });
+        }
+
+        // Gửi tệp nếu có
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append("recipient", JSON.stringify({ id: userId }));
+          formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+          formData.append("filedata", file);
+          formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
+          await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+            method: "POST",
+            body: formData,
+          });
+        }
+
+        userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${userName}</div>`;
+        sentCount++; // Tăng số lượng đã gửi
+        document.getElementById("sendingStatus").textContent = `Đang gửi tin nhắn: ${sentCount}/${totalUsers}`;
+
+        // Lưu người đã gửi vào localStorage
+        sentUsers.push({ id: userId, timestamp: now });
+        localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
+
+        // Lưu vào promotion nếu có
+        if (promotionName) {
+          if (!promotions[promotionName]) {
+            promotions[promotionName] = [];
+          }
+          promotions[promotionName].push({ id: userId, name: userName });
+          localStorage.setItem('promotions', JSON.stringify(promotions));
+        }
+
+      } catch (error) {
+        userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${userName}: ${error.message}</div>`;
+      }
+    }
+    document.getElementById("sendingStatus").textContent = `Đã gửi tin nhắn thành công: ${sentCount}/${totalUsers}`;
+    userListElement.innerHTML += "<div>Hoàn thành.</div>";
+
+    // Reset lại file input và message
+    document.getElementById('fileInput').value = ""; // Reset input file
+    selectedFiles = []; // Reset lại mảng tệp đã chọn
+    document.getElementById("message").value = ""; // Reset message
+    alert("Tin nhắn đã được gửi thành công.");
+    console.log("usersFromExcel: " + usersToSend);
+  }
+  else {
     // Nếu không có dữ liệu Excel, sử dụng người dùng được chọn từ checkbox
     usersToSend = Array.from(selectedUsers).filter(checkbox => {
       const userId = checkbox.value;
       const lastSent = sentUsers.find(sentUser => sentUser.id === userId);
       return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
     });
-  }
-
-  if (usersToSend.length === 0) {
-    userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
-    return;
-  }
-
-  userListElement.innerHTML = "Đang gửi tin nhắn...";
-
-  let sentCount = 0; // Đếm số tin nhắn đã gửi thành công
-  const totalUsers = usersToSend.length; // Tổng số người dùng
-
-  function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // Gửi tin nhắn cho từng người dùng
-  for (let i = 0; i < usersToSend.length; i++) {
-    const user = usersFromExcel.length > 0 ? usersToSend[i] : usersToSend[i].parentElement;
-    const userId = user.id;
-    const userName = user.name || user.textContent.trim();
-
-    try {
-      // Thời gian delay ngẫu nhiên từ 10 đến 30 giây (nếu không phải lần đầu tiên)
-      if (i !== 0) {
-        const randomDelay = Math.floor(Math.random() * 20000) + 10000;
-        await delay(randomDelay);
-      }
-
-      // Gửi tin nhắn văn bản
-      if (message) {
-        await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            recipient: { id: userId },
-            message: { text: message },
-            tag: "CONFIRMED_EVENT_UPDATE",
-          }),
-        });
-      }
-
-      // Gửi tệp nếu có
-      for (const file of selectedFiles) {
-        const formData = new FormData();
-        formData.append("recipient", JSON.stringify({ id: userId }));
-        formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
-        formData.append("filedata", file);
-        formData.append("tag", "CONFIRMED_EVENT_UPDATE");
-
-        await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
-          method: "POST",
-          body: formData,
-        });
-      }
-
-      userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${userName}</div>`;
-      sentCount++; // Tăng số lượng đã gửi
-
-      // Lưu người đã gửi vào localStorage
-      sentUsers.push({ id: userId, timestamp: now });
-      localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
-
-      // Lưu vào promotion nếu có
-      if (promotionName) {
-        const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
-        if (!promotions[promotionName]) {
-          promotions[promotionName] = [];
-        }
-        promotions[promotionName].push({ id: userId, name: userName });
-        localStorage.setItem('promotions', JSON.stringify(promotions));
-      }
-
-    } catch (error) {
-      userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${userName}: ${error.message}</div>`;
+    if (usersToSend.length === 0) {
+      userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
+      return;
     }
+
+    userListElement.innerHTML = "Đang gửi tin nhắn...";
+
+    let completedRequests = 0;
+    let sentCount = 0; // Đếm số tin nhắn đã gửi thành công
+    const totalUsers = usersToSend.length; // Tổng số người dùng
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Gửi tin nhắn cho từng người dùng
+    for (let i = 0; i < usersToSend.length; i++) {
+      const checkbox = usersToSend[i];
+      const userId = checkbox.value;
+      const userName = checkbox.parentElement.textContent.trim();
+      try {
+        // Gửi tin nhắn văn bản
+        if (i !== 0) {
+          const randomDelay = Math.floor(Math.random() * 20000) + 10000; // Thời gian delay ngẫu nhiên từ 10 đến 30 giây
+          await delay(randomDelay);
+        }
+        if (message) {
+          await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              recipient: { id: userId },
+              message: { text: message },
+              tag: "CONFIRMED_EVENT_UPDATE",
+            }),
+          });
+        }
+
+        // Gửi tệp nếu có
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append("recipient", JSON.stringify({ id: userId }));
+          formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+          formData.append("filedata", file);
+          formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
+          await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+            method: "POST",
+            body: formData,
+          });
+        }
+
+        userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}</div>`;
+        sentCount++; // Tăng số lượng đã gửi
+        document.getElementById("sendingStatus").textContent = `Đang gửi tin nhắn: ${sentCount}/${totalUsers}`; // Cập nhật trạng thái
+
+        // Lưu người đã gửi vào localStorage
+        sentUsers.push({ id: userId, timestamp: now });
+        localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
+
+        if (promotionName) {
+          if (!promotions[promotionName]) {
+            promotions[promotionName] = [];
+          }
+          promotions[promotionName].push({ id: userId, name: userName });
+          localStorage.setItem('promotions', JSON.stringify(promotions));
+
+          // Cập nhật select box nếu tên khuyến mãi chưa có
+          const promotionSelect = document.getElementById("promotionSelect");
+          const existingOptions = Array.from(promotionSelect.options).map(option => option.value);
+          if (!existingOptions.includes(promotionName)) {
+            const newOption = document.createElement("option");
+            newOption.value = promotionName;
+            newOption.textContent = promotionName;
+            promotionSelect.appendChild(newOption);
+          }
+        }
+
+      } catch (error) {
+        userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${checkbox.parentElement.textContent.trim()}: ${error.message}</div>`;
+      }
+    }
+    document.getElementById("sendingStatus").textContent = `Đã gửi tin nhắn thành công: ${sentCount}/${totalUsers}`;
+    userListElement.innerHTML += "<div>Hoàn thành.</div>";
+
+    // Reset lại file input và message
+    document.getElementById('fileInput').value = ""; // Reset input file
+    selectedFiles = []; // Reset lại mảng tệp đã chọn
+    document.getElementById("message").value = ""; // Reset message
+    alert("Tin nhắn đã được gửi thành công.");
+    console.log("usersFromExcel không : " + usersToSend);
   }
 
-  document.getElementById("sendingStatus").textContent = `Đã gửi tin nhắn thành công: ${sentCount}/${totalUsers}`;
-  userListElement.innerHTML += "<div>Hoàn thành.</div>";
+  console.log(":" + usersToSend);
 
-  // Reset lại file input và message
+
+
   setTimeout(() => {
-    document.getElementById('fileInput').value = ""; // Reset input file
-    document.getElementById("message").value = ""; 
-    document.getElementById('fileInput').value = ""; 
-    document.getElementById("output").innerHTML = ""
-    alert("Tin nhắn đã được gửi thành công.");
-    document.getElementById("loadUsers").click(); 
-  }, 2000);
+    document.getElementById("loadUsers").click(); // Nếu cần load lại danh sách người dùng
+  }, 2000)
 });
+
+// document.getElementById("sendNow").addEventListener("click", async function (event) {
+//   event.preventDefault();
+
+//   const userListElement = document.getElementById("userList");
+//   const message = document.getElementById("message").value;
+//   const accessToken = document.getElementById("accessToken").value;
+//   const selectedUsers = document.querySelectorAll('input[type="checkbox"].user-checkbox:checked');
+//   const promotionName = document.getElementById("promotionName").value;
+//   const usersFromExcel = JSON.parse(localStorage.getItem('excelUsers')) || [];
+//   let selectedFiles = document.getElementById("fileInput").files;
+
+//   const userErrorElement = document.getElementById("userError");
+//   const messageErrorElement = document.getElementById("messageError");
+
+//   userErrorElement.style.display = "none";
+//   messageErrorElement.style.display = "none";
+
+//   let hasError = false;
+
+//   // Kiểm tra nếu không có người dùng nào được chọn và không có dữ liệu Excel
+//   if (usersFromExcel.length === 0 && selectedUsers.length === 0) {
+//     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng hoặc nhập file Excel.";
+//     alert(userErrorElement.textContent);
+//     userErrorElement.style.display = "block";
+//     hasError = true;
+//   }
+
+//   // Kiểm tra nếu không có tin nhắn hoặc file được chọn
+//   if (selectedFiles.length === 0 && !message) {
+//     messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
+//     alert(messageErrorElement.textContent);
+//     messageErrorElement.style.display = "block";
+//     hasError = true;
+//   }
+
+//   if (hasError) {
+//     return;
+//   }
+
+//   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
+//   const now = new Date();
+//   const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
+
+//   // Nếu có dữ liệu Excel, sử dụng danh sách người dùng từ Excel
+//   let usersToSend = [];
+//   if (usersFromExcel.length > 0) {
+//     usersToSend = usersFromExcel.filter(user => {
+//       const lastSent = sentUsers.find(sentUser => sentUser.id === user.id);
+//       return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
+//     });
+//   } else {
+//     // Nếu không có dữ liệu Excel, sử dụng người dùng được chọn từ checkbox
+//     usersToSend = Array.from(selectedUsers).filter(checkbox => {
+//       const userId = checkbox.value;
+//       const lastSent = sentUsers.find(sentUser => sentUser.id === userId);
+//       return !(lastSent && new Date(lastSent.timestamp) > oneHourAgo); // Lọc ra những người chưa nhận tin nhắn trong 1 giờ qua
+//     });
+//   }
+
+//   if (usersToSend.length === 0) {
+//     userListElement.innerHTML = "Tất cả người dùng đã được gửi tin nhắn trong vòng 1 giờ qua.";
+//     return;
+//   }
+
+//   userListElement.innerHTML = "Đang gửi tin nhắn...";
+
+//   let sentCount = 0; // Đếm số tin nhắn đã gửi thành công
+//   const totalUsers = usersToSend.length; // Tổng số người dùng
+
+//   function delay(ms) {
+//     return new Promise(resolve => setTimeout(resolve, ms));
+//   }
+
+//   // Gửi tin nhắn cho từng người dùng
+//   for (let i = 0; i < usersToSend.length; i++) {
+//     const user = usersFromExcel.length > 0 ? usersToSend[i] : usersToSend[i].parentElement;
+//     const userId = user.id;
+//     const userName = user.name || user.textContent.trim();
+
+//     try {
+//       // Thời gian delay ngẫu nhiên từ 10 đến 30 giây (nếu không phải lần đầu tiên)
+//       if (i !== 0) {
+//         const randomDelay = Math.floor(Math.random() * 20000) + 10000;
+//         await delay(randomDelay);
+//       }
+
+//       // Gửi tin nhắn văn bản
+//       if (message) {
+//         await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//           },
+//           body: JSON.stringify({
+//             recipient: { id: userId },
+//             message: { text: message },
+//             tag: "CONFIRMED_EVENT_UPDATE",
+//           }),
+//         });
+//       }
+
+//       // Gửi tệp nếu có
+//       for (const file of selectedFiles) {
+//         const formData = new FormData();
+//         formData.append("recipient", JSON.stringify({ id: userId }));
+//         formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+//         formData.append("filedata", file);
+//         formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
+//         await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+//           method: "POST",
+//           body: formData,
+//         });
+//       }
+
+//       userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${userName}</div>`;
+//       sentCount++; // Tăng số lượng đã gửi
+
+//       // Lưu người đã gửi vào localStorage
+//       sentUsers.push({ id: userId, timestamp: now });
+//       localStorage.setItem('sentUsers', JSON.stringify(sentUsers));
+
+//       // Lưu vào promotion nếu có
+//       if (promotionName) {
+//         const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
+//         if (!promotions[promotionName]) {
+//           promotions[promotionName] = [];
+//         }
+//         promotions[promotionName].push({ id: userId, name: userName });
+//         localStorage.setItem('promotions', JSON.stringify(promotions));
+//       }
+
+//     } catch (error) {
+//       userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${userName}: ${error.message}</div>`;
+//     }
+//   }
+
+//   document.getElementById("sendingStatus").textContent = `Đã gửi tin nhắn thành công: ${sentCount}/${totalUsers}`;
+//   userListElement.innerHTML += "<div>Hoàn thành.</div>";
+
+//   // Reset lại file input và message
+//   setTimeout(() => {
+//     document.getElementById('fileInput').value = ""; // Reset input file
+//     document.getElementById("message").value = ""; 
+//     document.getElementById('fileInput').value = ""; 
+//     document.getElementById("output").innerHTML = ""
+//     alert("Tin nhắn đã được gửi thành công.");
+//     document.getElementById("loadUsers").click(); 
+//   }, 2000);
+// });
 
 
 document.getElementById('exportToExcel').addEventListener('click', function (event) {
-  event.preventDefault(); 
+  event.preventDefault();
   console.log("Nút xuất Excel đã được nhấn");
 
   const userListElement = document.getElementById('userList');
   const sentUserListElement = document.getElementById('sentUserList');
-  
+
   const users = [];
 
   // Lấy danh sách người dùng đã gửi
   const sentUsers = Array.from(sentUserListElement.getElementsByClassName('user-item')).map(item => {
-    const userName = item.textContent.split(' (')[0]; 
+    const userName = item.textContent.split(' (')[0];
     const userId = item.getAttribute('data-user-id');
     const timestamp = item.getAttribute('data-timestamp');
     return { id: userId, name: userName, timestamp: new Date(timestamp), sent: true };
@@ -1529,7 +1783,7 @@ document.getElementById('exportToExcel').addEventListener('click', function (eve
 //   // Ghép danh sách đã gửi và danh sách người dùng
 //   const finalUserList = [...users, ...sentUsers];
 //   console.log(finalUserList); // In ra danh sách người dùng cuối cùng
-  
+
 //   // Tạo workbook và worksheet
 //   const worksheet = XLSX.utils.json_to_sheet(finalUserList);
 //   const workbook = XLSX.utils.book_new();
