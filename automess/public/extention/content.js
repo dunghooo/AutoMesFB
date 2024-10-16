@@ -838,7 +838,6 @@ existingDiv.innerHTML = `
 <input type="file" id="importExcel" accept=".xlsx, .xls" />
 
 <button id="importButton" style="display:none;"></button>
- <div class="sent-user-list" id="output"></div>
 
 
                       <div>
@@ -1269,8 +1268,8 @@ document.getElementById('importExcel').addEventListener('change', function (even
 
 // Hàm hiển thị dữ liệu từ file Excel ra dưới dạng bảng
 function displayData(data) {
-  const outputDiv = document.getElementById('output');
-  outputDiv.innerHTML = ''; // Xóa nội dung cũ
+  const userListDiv = document.getElementById('userList');
+  userListDiv.innerHTML = ''; // Xóa nội dung cũ
 
   // Hiển thị dữ liệu theo định dạng bảng
   const table = document.createElement('table');
@@ -1278,25 +1277,26 @@ function displayData(data) {
 
   // Tạo tiêu đề bảng
   Object.keys(data[0]).forEach(key => {
-      const th = document.createElement('th');
-      th.textContent = key;
-      headerRow.appendChild(th);
+    const th = document.createElement('th');
+    th.textContent = key;
+    headerRow.appendChild(th);
   });
   table.appendChild(headerRow);
 
   // Tạo các hàng cho dữ liệu
   data.forEach(row => {
-      const tr = document.createElement('tr');
-      Object.values(row).forEach(value => {
-          const td = document.createElement('td');
-          td.textContent = value;
-          tr.appendChild(td);
-      });
-      table.appendChild(tr);
+    const tr = document.createElement('tr');
+    Object.values(row).forEach(value => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
   });
 
-  outputDiv.appendChild(table); // Thêm bảng vào output div
+  userListDiv.appendChild(table); // Thêm bảng vào userList div
 }
+
 
 document.getElementById("sendNow").addEventListener("click", async function (event) {
   event.preventDefault();
