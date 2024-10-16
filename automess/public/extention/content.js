@@ -838,7 +838,7 @@ existingDiv.innerHTML = `
 <input type="file" id="importExcel" accept=".xlsx, .xls" />
 
 <button id="importButton" style="display:none;"></button>
-<div id="output"></div>
+ <div class="sent-user-list" id="output"></div>
 
 
                       <div>
@@ -1298,7 +1298,6 @@ function displayData(data) {
   outputDiv.appendChild(table); // Thêm bảng vào output div
 }
 
-// Lắng nghe sự kiện click của nút gửi tin
 document.getElementById("sendNow").addEventListener("click", async function (event) {
   event.preventDefault();
 
@@ -1321,18 +1320,14 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   // Kiểm tra nếu không có người dùng nào được chọn và không có dữ liệu Excel
   if (usersFromExcel.length === 0 && selectedUsers.length === 0) {
     userErrorElement.textContent = "Vui lòng chọn ít nhất một người dùng hoặc nhập file Excel.";
-    alert("Chọn người gửi hoặc nhập file Excel.");
+    alert(userErrorElement.textContent);
     userErrorElement.style.display = "block";
     hasError = true;
   }
 
   // Kiểm tra nếu không có tin nhắn hoặc file được chọn
   if (selectedFiles.length === 0 && !message) {
-    if (selectedFiles.length === 0) {
-      messageErrorElement.textContent = "Vui lòng chọn tệp.";
-    } else if (!message) {
-      messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn.";
-    }
+    messageErrorElement.textContent = "Vui lòng nhập nội dung tin nhắn hoặc chọn tệp.";
     alert(messageErrorElement.textContent);
     messageErrorElement.style.display = "block";
     hasError = true;
@@ -1343,12 +1338,11 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   }
 
   const sentUsers = JSON.parse(localStorage.getItem('sentUsers')) || [];
-  const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
   // Nếu có dữ liệu Excel, sử dụng danh sách người dùng từ Excel
-  let usersToSend;
+  let usersToSend = [];
   if (usersFromExcel.length > 0) {
     usersToSend = usersFromExcel.filter(user => {
       const lastSent = sentUsers.find(sentUser => sentUser.id === user.id);
@@ -1370,7 +1364,6 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
   userListElement.innerHTML = "Đang gửi tin nhắn...";
 
-  let completedRequests = 0;
   let sentCount = 0; // Đếm số tin nhắn đã gửi thành công
   const totalUsers = usersToSend.length; // Tổng số người dùng
 
@@ -1422,7 +1415,6 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
       userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${userName}</div>`;
       sentCount++; // Tăng số lượng đã gửi
-      document.getElementById("sendingStatus").textContent = `Đang gửi tin nhắn: ${sentCount}/${totalUsers}`;
 
       // Lưu người đã gửi vào localStorage
       sentUsers.push({ id: userId, timestamp: now });
@@ -1430,6 +1422,7 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
       // Lưu vào promotion nếu có
       if (promotionName) {
+        const promotions = JSON.parse(localStorage.getItem('promotions')) || {};
         if (!promotions[promotionName]) {
           promotions[promotionName] = [];
         }
@@ -1448,14 +1441,13 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   // Reset lại file input và message
   setTimeout(() => {
     document.getElementById('fileInput').value = ""; // Reset input file
-    selectedFiles = []; // Reset lại mảng tệp đã chọn
-    document.getElementById("message").value = ""; // Reset message
+    document.getElementById("message").value = ""; 
+    document.getElementById('fileInput').value = ""; 
+    document.getElementById("output").innerHTML = ""
     alert("Tin nhắn đã được gửi thành công.");
     document.getElementById("loadUsers").click(); 
   }, 2000);
- 
 });
-
 
 
 document.getElementById('exportToExcel').addEventListener('click', function (event) {
