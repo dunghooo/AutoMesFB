@@ -15,7 +15,10 @@
   "content_scripts": [
     {
       "matches": ["*://*.facebook.com/*"],
-      "js": ["./public/extention/content.js"],
+      "js": [
+        "./public/extention/xlsx.full.min.js",
+        "./public/extention/content.js"],
+
       "run_at": "document_end",
       "all_frames": true
     }

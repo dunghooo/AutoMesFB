@@ -1,3 +1,5 @@
+
+
 const existingDiv = document.createElement("div");
 existingDiv.id = "my-extension-popup";
 existingDiv.style.position = "fixed";
@@ -22,6 +24,8 @@ existingDiv.innerHTML = `
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
         <style>
             body {
                 
@@ -846,6 +850,10 @@ existingDiv.innerHTML = `
                     <div class="user-list" id="userList" style="color: black;">
                         <!-- Danh sách người dùng sẽ được thêm vào đây -->
                     </div>
+                    <div class="export-buttons">
+    <button id="exportToExcel" type="button">Xuất Excel</button>
+</div>
+
                     <div class="sent-user-list" id="sentUserList" style="color: black;">
                         <!-- Danh sách người dùng đã gửi tin nhắn sẽ được thêm vào đây -->
                         <div class="pagination" id="paginationSentUserList"></div>
@@ -962,6 +970,10 @@ document.querySelector("textarea").addEventListener("input", function () {
   const message = this.value;
   chrome.storage.local.set({ messageContent: message });
 });
+
+
+
+
 
 
 // timkiem
@@ -1343,6 +1355,48 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
 
 
 
+document.getElementById('exportToExcel').addEventListener('click', function (event) {
+  event.preventDefault(); 
+  console.log("Nút xuất Excel đã được nhấn"); // Kiểm tra xem sự kiện có được gọi không
+
+  const userListElement = document.getElementById('userList');
+  const sentUserListElement = document.getElementById('sentUserList');
+
+  // Lấy danh sách người dùng
+  const users = [];
+
+  // Lấy người dùng đã gửi
+  const sentUsers = Array.from(sentUserListElement.getElementsByClassName('user-item')).map(item => {
+      const userName = item.textContent.split(' (')[0]; // Lấy tên người dùng
+      return { name: userName, sent: true };
+  });
+
+  // Lấy người dùng từ userList
+  Array.from(userListElement.getElementsByClassName('user-item')).forEach(item => {
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      const userName = item.textContent;
+
+      users.push({
+          name: userName,
+          sent: checkbox && checkbox.disabled // Kiểm tra nếu checkbox bị vô hiệu hóa
+      });
+  });
+
+  // Ghép danh sách đã gửi và danh sách người dùng
+  const finalUserList = [...users, ...sentUsers];
+  console.log(finalUserList); // In ra danh sách người dùng cuối cùng
+  
+  // Tạo workbook và worksheet
+  const worksheet = XLSX.utils.json_to_sheet(finalUserList);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách người dùng");
+
+  // Xuất file
+  XLSX.writeFile(workbook, "Danh_sach_nguoi_dung.xlsx");
+});
+
+
+
 // Khi thay đổi chọn khuyến mãi
 document.getElementById("promotionSelect").addEventListener("change", function () {
   const promotionName = this.value;
@@ -1501,7 +1555,5 @@ document.getElementById("scheduleSend").addEventListener("click", function () {
     });
   }, delay);
 });
-
-
 
 
