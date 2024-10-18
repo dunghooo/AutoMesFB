@@ -803,11 +803,6 @@ existingDiv.innerHTML = `
                         <input type="file" id="fileInput" style="display:none;" multiple />
                         <p id="fileNames"></p>
                     </div>
-                     <br>
-                    <div class="send-div">
-                        <button id="sendNow">SEND NOW</button>
-                    </div>
-                    <br>
                     <div class="check col-12">
                         <div class="time col-12">
                             <div class="day col-6">
@@ -836,10 +831,23 @@ existingDiv.innerHTML = `
                     </div>
                     <button id="exportButton" style="display:none;"></button>
 <input type="file" id="importExcel" accept=".xlsx, .xls" />
-
+                <label for="delayTime">Delay (giây):</label>
+                <select id="delayTime" style="margin: 0 auto">
+                  <option value="10">10 giây</option>
+                  <option value="20">20 giây</option>
+                  <option value="30">30 giây</option>
+                  <option value="40">40 giây</option>
+                  <option value="50">50 giây</option>
+                </select>
+                <br>
+                                
+                    <div class="send-div" style="margin-top:10px">
+                        <button id="sendNow">SEND NOW</button>
+                    </div>
+                    <br>
 <button id="importButton" style="display:none;"></button>
 
-
+<br>
                       <div>
         <input type="text" id="searchUser" placeholder="Tìm kiếm người dùng..." style="margin-bottom: 10px;">
     </div>
@@ -1308,6 +1316,10 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
   const usersFromExcel = JSON.parse(localStorage.getItem('excelUsers')) || [];
   let selectedFiles = document.getElementById("fileInput").files;
 
+
+
+  const delayTime = parseInt(document.getElementById("delayTime").value) * 1000;
+
   const userErrorElement = document.getElementById("userError");
   const messageErrorElement = document.getElementById("messageError");
 
@@ -1375,24 +1387,64 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
       const userName = user.name || user.textContent.trim();
 
       try {
-        // Thời gian delay ngẫu nhiên từ 10 đến 30 giây (nếu không phải lần đầu tiên)
+
         if (i !== 0) {
-          const randomDelay = Math.floor(Math.random() * 20000) + 10000;
-          await delay(randomDelay);
+
+          // Gửi tin nhắn văn bản
+          if (message) {
+            await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                recipient: { id: userId },
+                message: { text: message },
+                tag: "CONFIRMED_EVENT_UPDATE",
+              }),
+            });
+          }
+          for (const file of selectedFiles) {
+            const formData = new FormData();
+            formData.append("recipient", JSON.stringify({ id: userId }));
+            formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+            formData.append("filedata", file);
+            formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
+            await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+              method: "POST",
+              body: formData,
+            });
+          }
+        }
+        else {
+          await delay(delayTime);
+          if (message) {
+            await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                recipient: { id: userId },
+                message: { text: message },
+                tag: "CONFIRMED_EVENT_UPDATE",
+              }),
+            });
+          }
         }
 
-        // Gửi tin nhắn văn bản
-        if (message) {
+        // Gửi tệp nếu có
+        for (const file of selectedFiles) {
+          const formData = new FormData();
+          formData.append("recipient", JSON.stringify({ id: userId }));
+          formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
+          formData.append("filedata", file);
+          formData.append("tag", "CONFIRMED_EVENT_UPDATE");
+
           await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              recipient: { id: userId },
-              message: { text: message },
-              tag: "CONFIRMED_EVENT_UPDATE",
-            }),
+            body: formData,
           });
         }
 
@@ -1426,6 +1478,7 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
           promotions[promotionName].push({ id: userId, name: userName });
           localStorage.setItem('promotions', JSON.stringify(promotions));
         }
+        await new Promise(resolve => setTimeout(resolve, delayTime));
 
       } catch (error) {
         userListElement.innerHTML += `<div style="color:red;">Lỗi khi gửi tin nhắn tới ${userName}: ${error.message}</div>`;
@@ -1470,26 +1523,40 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
       const userName = checkbox.parentElement.textContent.trim();
       try {
         // Gửi tin nhắn văn bản
-        if (i !== 0) {
-          const randomDelay = Math.floor(Math.random() * 20000) + 10000; // Thời gian delay ngẫu nhiên từ 10 đến 30 giây
-          await delay(randomDelay);
-        }
-        if (message) {
-          await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              recipient: { id: userId },
-              message: { text: message },
-              tag: "CONFIRMED_EVENT_UPDATE",
-            }),
-          });
-        }
+        if (i === 0) {
+          if (message) {
+              await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                      recipient: { id: userId },
+                      message: { text: message },
+                      tag: "CONFIRMED_EVENT_UPDATE",
+                  }),
+              });
+          }
+      } else {
+          // Delay cho các tin nhắn sau
+          await delay(delayTime);
+          if (message) {
+              await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                      recipient: { id: userId },
+                      message: { text: message },
+                      tag: "CONFIRMED_EVENT_UPDATE",
+                  }),
+              });
+          }
+      }
 
-        // Gửi tệp nếu có
-        for (const file of selectedFiles) {
+      // Gửi tệp nếu có
+      for (const file of selectedFiles) {
           const formData = new FormData();
           formData.append("recipient", JSON.stringify({ id: userId }));
           formData.append("message", JSON.stringify({ attachment: { type: "image", payload: { is_reusable: true } } }));
@@ -1497,10 +1564,10 @@ document.getElementById("sendNow").addEventListener("click", async function (eve
           formData.append("tag", "CONFIRMED_EVENT_UPDATE");
 
           await fetch(`https://graph.facebook.com/v20.0/me/messages?access_token=${accessToken}`, {
-            method: "POST",
-            body: formData,
+              method: "POST",
+              body: formData,
           });
-        }
+      }
 
         userListElement.innerHTML += `<div>Đã gửi tin nhắn cho ${checkbox.parentElement.textContent.trim()}</div>`;
         sentCount++; // Tăng số lượng đã gửi
