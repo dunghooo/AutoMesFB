@@ -831,6 +831,9 @@ existingDiv.innerHTML = `
                     </div>
                     <button id="exportButton" style="display:none;"></button>
 <input type="file" id="importExcel" accept=".xlsx, .xls" />
+    <div class="export-buttons">
+    <button id="exportToExcel" type="button">Xuất Excel</button>
+</div>
                 <label for="delayTime">Delay (giây):</label>
                 <select id="delayTime" style="margin: 0 auto">
                   <option value="10">10 giây</option>
@@ -867,9 +870,7 @@ existingDiv.innerHTML = `
                     <div class="user-list" id="userList" style="color: black;">
                         <!-- Danh sách người dùng sẽ được thêm vào đây -->
                     </div>
-                    <div class="export-buttons">
-    <button id="exportToExcel" type="button">Xuất Excel</button>
-</div>
+                
 
                     <div class="sent-user-list" id="sentUserList" style="color: black;">
                         <!-- Danh sách người dùng đã gửi tin nhắn sẽ được thêm vào đây -->
